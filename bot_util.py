@@ -6,7 +6,7 @@ https://github.com/theo-brown/EVL-bot-template
 
 COMMAND_PREFIX = '!'
 KWARG_PREFIX = '-'
-ERROR_ON_UNRECOGNISED_COMMAND = True
+ERROR_ON_UNRECOGNISED_COMMAND = False
 ECHO_COMMAND_ARGS = False
 
 def parse_args(message):
@@ -21,6 +21,7 @@ def parse_args(message):
         if arg.startswith(KWARG_PREFIX):
             if arg.startswith(2*KWARG_PREFIX):
                 # Separate flags (keywords that don't have values)
+                # Flags are determined by a double prefix (eg --)
                 value = ''
             else:    
                 # Next item in supplied args is the value
@@ -30,7 +31,10 @@ def parse_args(message):
             # Save in kwargs
             kwargs[keyword] = value
     for k, v in kwargs.items():
-        args.remove('-' + k)
-        args.remove(v)
+        if v == '':
+            args.remove(2*KWARG_PREFIX + k)
+        else:
+            args.remove(KWARG_PREFIX + k)
+            args.remove(v)
     
     return trigger, args, kwargs
