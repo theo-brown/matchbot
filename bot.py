@@ -9,7 +9,9 @@ import sys
 import bot_util
 from commands import hello, match, result
 
-client = discord.Client()
+intents = discord.Intents.default()
+intents.members = True
+client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
