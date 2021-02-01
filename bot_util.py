@@ -8,6 +8,8 @@ COMMAND_PREFIX = '!'
 KWARG_PREFIX = '-'
 ERROR_ON_UNRECOGNISED_COMMAND = False
 ECHO_COMMAND_ARGS = False
+DELETE_COMMAND_TRIGGER = True
+DELETE_COMMAND_TRIGGER_DELAY = 5
 
 def parse_args(message):
     # Get all the args separately

@@ -53,6 +53,10 @@ async def on_message(message):
             if bot_util.ECHO_COMMAND_ARGS:
                 
                 await message.channel.send("Trigger: `{}`\nargs: `{}`\nkwargs: `{}`".format(trigger, args, kwargs))
+            
+            if bot_util.DELETE_COMMAND_TRIGGER:
+                
+                await message.delete(delay=bot_util.DELETE_COMMAND_TRIGGER_DELAY)
                 
         elif bot_util.ERROR_ON_UNRECOGNISED_COMMAND:
             
