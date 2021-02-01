@@ -4,6 +4,7 @@ Licensed under GNU GPLv3
 https://github.com/theo-brown/EVL-bot-template
 """
 from discord import Embed
+import commands.leaderboard as leaderboard
 
 help_message = \
 """
@@ -12,35 +13,6 @@ Syntax: `!result MAPNAME1 SCORELINE1 [MAPNAME2 SCORELINE2 MAPNAME 3 SCORELINE 3 
 MAPNAME should contain no spaces
 SCORELINE should be in the form #-#, with the score of team :one: first
 """
-
-from operator import itemgetter
-
-leaderboard = {}
-
-
-def leaderboard_update(userlist):
-    for user in userlist:
-        if user in leaderboard.keys():
-            leaderboard[user] += 1
-        else:
-            leaderboard[user] = 1
-
-
-def leaderboard_generate_text():
-    # Create a list of tuples in the form (user, score), ordered from high to low score
-    leaderboard_list = sorted(leaderboard.items(), key=itemgetter(1), reverse=True)
-    positions = [1]*len(leaderboard_list)
-    for i in range(len(leaderboard_list)-1):
-        if leaderboard_list[i+1][1] == leaderboard_list[i][1]:
-            positions[i+1] = positions[i]
-        else:
-            positions[i+1] = positions[i] + 1
-    leaderboard_text = "**Pick'em Leaderboard:**\n```\n"
-    for i, v in enumerate(leaderboard_list):
-        leaderboard_text += "{}. {}\t\t({}pts)\n".format(positions[i], v[0], v[1])
-    leaderboard_text += "```"
-    return leaderboard_text
-
 
 async def run(message, args, kwargs):
     if message.reference is None:
@@ -100,8 +72,8 @@ async def run(message, args, kwargs):
         
         correct_reactors = await match_message.reactions[winner_reaction_index].users().flatten()
         # Remove the bot from the correct reactors
-        leaderboard_update(correct_reactors[1:])
-        await match_message.reply(leaderboard_generate_text())
+        leaderboard.increment(correct_reactors[1:])
+        await match_message.reply(leaderboard.generate_text())
         
 async def help(message, args, kwargs):
     await message.channel.send(help_message)
