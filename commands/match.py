@@ -39,13 +39,13 @@ async def run(message, args, kwargs):
     timestamp = date + time
 
     match_embed = Embed(title="**Match scheduled**", color=0xf1c40f)
-    match_embed.add_field(name=":one: " + team1.name, value=team1_players, inline=True)
-    match_embed.add_field(name=":two: " + team2.name, value=team2_players, inline=True)
+    match_embed.add_field(name="1\N{COMBINING ENCLOSING KEYCAP} " + team1.name, value=team1_players, inline=True)
+    match_embed.add_field(name="2\N{COMBINING ENCLOSING KEYCAP} " + team2.name, value=team2_players, inline=True)
     match_embed.set_footer(text=timestamp)
 
     match_message = await message.channel.send(embed=match_embed)
-    await match_message.add_reaction("1\u20e3")
-    await match_message.add_reaction("2\u20e3")
+    await match_message.add_reaction("1\N{COMBINING ENCLOSING KEYCAP}")
+    await match_message.add_reaction("2\N{COMBINING ENCLOSING KEYCAP}")
 
 
 
