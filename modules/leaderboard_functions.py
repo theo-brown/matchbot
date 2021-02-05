@@ -20,13 +20,12 @@ def increment(list_user_ids):
     for line in lines:
         if line != "\n":
             user_id, score = line.strip().split(":")
-            if user_id in list_user_ids:
-                scores[user_id] = int(score) + 1
-                list_user_ids.remove(user_id)
-            else:
-                scores[user_id] = int(score)
+            scores[user_id] = score
     for user_id in list_user_ids:
-        scores[user_id] = 1
+        if user_id in scores.keys():
+            scores[user_id] += 1
+        else:
+            scores[user_id] = 1
     with open("data/leaderboard.txt", "w") as f:
         f.writelines(["{}:{}\n".format(user_id, score) for user_id, score in scores.items()])
 
