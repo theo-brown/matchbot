@@ -1,0 +1,11 @@
+[Unit]
+Description=tournaBOT Flask app to listen for pushes to remote git repo
+ConditionHost=sinkhole
+
+[Install]
+WantedBy=default.target
+
+[Service]
+WorkingDirectory=/home/tab53/programs/tournaBOT/webhook/
+ExecStart=/home/tab53/programs/tournaBOT/webhook/run
+Restart=always
