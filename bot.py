@@ -13,7 +13,7 @@ bot = commands.Bot(command_prefix='!', intents=bot_intents)
 
 @bot.event
 async def on_ready():
-	print("Connected as {}".format(bot.user))
+    print("Connected as {}".format(bot.user))
 
 ###############################################################################
 ###############################################################################
@@ -23,7 +23,7 @@ async def on_ready():
 # Channelmap    
 @bot.command()
 @commands.has_permissions(manage_channels=True)
-async def channelmap(ctx, *args):        
+async def channelmap(ctx, *args):
     mentioned_channels = ctx.message.raw_channel_mentions
     if len(args) == 0:
         channelmap_text = channelmap_functions.get_as_str()
@@ -57,15 +57,16 @@ async def autodelete(ctx, *args):
             autodelete_functions.add(channel)
         await ctx.send("Added to `autodelete`:\n {}".format(mentioned_channels))
 
+
 @bot.listen()
 async def on_message(msg):
     if autodelete_functions.in_autodelete(msg.channel.id) and not msg.author.bot:
         await msg.delete(delay=10)
 
-         
+
 ###############################################################################
 ###############################################################################
-            
+
 # MATCH COMMAND
 
 @bot.command()
@@ -121,16 +122,16 @@ async def result(ctx, *args):
         team1_players = match_embed.fields[0].value
         team2 = match_embed.fields[1].name
         team2_players = match_embed.fields[1].value
-        
+
         scores = {}
         for i in range(len(args) // 2):
-            map_i = args[2*i]
-            score_i = args[2*i+1]
+            map_i = args[2 * i]
+            score_i = args[2 * i + 1]
             scores[map_i] = score_i
-        
+
         maps_won = [0, 0]
         round_diff = 0
-        
+
         for map_played, map_score in scores.items():
             map_score_list = map_score.split('-')
             map_score_t1 = int(map_score_list[0])
@@ -142,7 +143,7 @@ async def result(ctx, *args):
             else:
                 scores[map_played] = "{} - **{}**\n".format(map_score_t1, map_score_t2)
                 maps_won[1] += 1
-                
+
         if maps_won[0] > maps_won[1]:
             winner = team1[3:] + " wins"
             winner_icon = "https://twemoji.maxcdn.com/v/latest/72x72/31-20e3.png"
@@ -151,24 +152,24 @@ async def result(ctx, *args):
             winner = team2[3:] + " wins"
             winner_icon = "https://twemoji.maxcdn.com/v/latest/72x72/32-20e3.png"
             winner_reaction_index = 1
-            
+
         description = ""
         for map_played, map_score in scores.items():
             description += map_played + ": " + map_score
-        
+
         result_embed = discord.Embed(title="**Match result**", color=0x2ecc71)
         result_embed.description = description
         result_embed.add_field(name=team1 + " ({0:+})".format(round_diff), value=team1_players, inline=True)
         result_embed.add_field(name=team2 + " ({0:+})".format(-round_diff), value=team2_players, inline=True)
         result_embed.set_footer(text=winner, icon_url=winner_icon)
         await match_message.reply(embed=result_embed)
-        
+
         correct_reactors = await match_message.reactions[winner_reaction_index].users().flatten()
         correct_reactors = [reactor.id for reactor in correct_reactors[1:]]
         # Remove the bot from the correct reactors
         leaderboard_functions.increment(correct_reactors)
         await match_message.reply(leaderboard_functions.get_as_str())
-    
+
 ###############################################################################
 
 # LEADERBOARD COMMAND    
