@@ -7,7 +7,7 @@ app = Flask(__name__)
 def respond():
     payload = request.get_json()
     print(payload["ref"])
-    if payload["ref"] == "refs/head/main":
+    if payload["ref"] == "refs/heads/main":
         print("Pulling repo....")
         subprocess.run("./bot_update.sh", shell=True)
     return Response(status=200)
