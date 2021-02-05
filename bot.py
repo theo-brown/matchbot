@@ -1,5 +1,7 @@
 import discord
+from discord import Role, User, Embed, Colour
 from discord.ext import commands
+from typing import Union
 from modules import autodelete_functions, channelmap_functions, leaderboard_functions, utility_functions
 
 # Enable the bot to see members roles etc
@@ -67,65 +69,37 @@ async def on_message(msg):
 # MATCH COMMAND
 
 @bot.command()
-async def match(ctx, *args):
-    send_channel = ctx.guild.get_channel(channelmap_functions.get_send_channel_id(ctx.channel.id))
-    
+async def match(ctx, team1: Union[Role,User,str], team2: Union[Role,User,str], *, dt=''):
     date = "Today"
-    time = ""
-    if len(args) == 3:
-        time = " at " + args[2]
-    elif len(args) == 4:
-        date = args[2]
-        time = " at " + args[3]
-    timestamp = date + time
+    time = ''
+    dt = dt.split()
 
-    if len(ctx.message.mentions) == 2:
-        # 2 users mentioned
-        team1, team2 = ctx.message.mentions
-        team1_players = team1.mention
-        team2_players = team2.mention
-        team1, team2 = team1.nick, team2.nick
-        
-    elif len(ctx.message.mentions) == 1 and len(ctx.message.role_mentions) == 1:
-        # 1 user 1 role mentioned
-        team1 = ctx.message.mentions[0]
-        team1_players = team1.mention
-        team2 = ctx.message.role_mentions[0]
-        team2_players = ""
-        team2_users = utility_functions.get_users_with_role(ctx, team2.id)
-        for user in team2_users:
-            team2_players += "{}\n".format(user.mention) 
-        team1, team2 = team1.nick, team2.name
-            
-    elif len(ctx.message.role_mentions) == 2:
-        # 2 roles mentioned
-        team1, team2 = ctx.message.role_mentions
-        team1_players, team2_players = "", ""
-        team1_users = utility_functions.get_users_with_role(ctx, team1.id)
-        team2_users = utility_functions.get_users_with_role(ctx, team2.id)
-        for user in team1_users:
-            team1_players += "{}\n".format(user.mention)
-        for user in team2_users:
-            team2_players += "{}\n".format(user.mention)
-        team1, team2 = team1.name, team2.name
-    
-    elif len(ctx.message.role_mentions) == 1:
-        # 1 role mentioned, other is presumed to be a text string of opposing team
-        team1 = ctx.message.role_mentions[0]
-        team2 = args[1]
-        team2_players = "\u200b"
-        team1_players = ""
-        team1_users = utility_functions.get_users_with_role(ctx, team1.id)
-        for user in team1_users:
-            team1_players += "{}\n".format(user.mention) 
-        team1 = team1.name
-    
-    match_embed = discord.Embed(title="**Match scheduled**", color=0xf1c40f)
-    match_embed.add_field(name="1\N{COMBINING ENCLOSING KEYCAP} " + team1, value=team1_players, inline=True)
-    match_embed.add_field(name="2\N{COMBINING ENCLOSING KEYCAP} " + team2, value=team2_players, inline=True)
-    match_embed.set_footer(text=timestamp)
+    if len(dt) == 1:
+        time = " at " + dt[0]
+    elif len(dt) == 2:
+        if dt[0] == '-d':
+            d,date = dt
+        else:
+            t,time = dt
+    elif len(dt) == 4:
+        d,date,t,time = dt
 
-    match_message = await send_channel.send(embed=match_embed)
+    timestamp = date + (" at " if time else '') + time
+
+    embed = Embed(title="**Match scheduled**", colour=Colour.gold())
+    embed.set_footer(text=timestamp)
+
+    for i,team in enumerate((team1, team2)):
+        emoji = f'{i}\N{COMBINING ENCLOSING KEYCAP} '
+        if isinstance(team, User):
+            embed.add_field(name=emoji+team.nick, value=team.mention)
+        elif isinstance(team, Role):
+            embed.add_field(name=emoji+team.mention, value='\n'.join(m.mention for m in team.members))
+        else:
+            embed.add_field(name=emoji+team, value='\u200b')
+
+    send_channel = ctx.guild.get_channel(channelmap_functions.get_send_channel_id(ctx.channel.id))
+    match_message = await send_channel.send(embed=embed)
     await match_message.add_reaction("1\N{COMBINING ENCLOSING KEYCAP}")
     await match_message.add_reaction("2\N{COMBINING ENCLOSING KEYCAP}")
 
@@ -133,7 +107,7 @@ async def match(ctx, *args):
 
 # RESULT COMMAND
 @bot.command()
-async def result(ctx, *args):    
+async def result(ctx, *args):
     if ctx.message.reference is None:
         await ctx.send("Error: `!result` must be sent as a reply to a message.")
         return
@@ -214,8 +188,9 @@ async def leaderboard(ctx, *args):
                     leaderboard_functions.add_user(mentions[0].id)
                     await ctx.send("Added {} with score 0".format(mentions[0]))
     await ctx.send(leaderboard_functions.get_as_str())
-        
+
+
 ###############################################################################
 ###############################################################################
-    
+
 utility_functions.run(bot)
