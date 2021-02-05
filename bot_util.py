@@ -3,6 +3,7 @@ EVL Discord Bot template by Theo Brown
 Licensed under GNU GPLv3
 https://github.com/theo-brown/EVL-bot-template
 """
+import discord
 
 COMMAND_PREFIX = '!'
 KWARG_PREFIX = '-'
@@ -40,3 +41,10 @@ def parse_args(message):
             args.remove(v)
     
     return trigger, args, kwargs
+
+def get_users_with_role(role):
+    users = []
+    for user in discord.guild.members:
+        if role in user.roles:
+            users.append(user)
+    return users

@@ -53,14 +53,14 @@ async def on_message(message):
             if bot_util.ECHO_COMMAND_ARGS:
                 
                 await message.channel.send("Trigger: `{}`\nargs: `{}`\nkwargs: `{}`".format(trigger, args, kwargs))
-            
-            if bot_util.DELETE_COMMAND_TRIGGER:
-                
-                await message.delete(delay=bot_util.DELETE_COMMAND_TRIGGER_DELAY)
                 
         elif bot_util.ERROR_ON_UNRECOGNISED_COMMAND:
             
             await message.channel.send("Error: command `{}` has not been recognised.".format(trigger))
+        
+        if bot_util.DELETE_COMMAND_TRIGGER:
+                
+                await message.delete(delay=bot_util.DELETE_COMMAND_TRIGGER_DELAY)
             
 
 with open('bot_token.txt') as f:
