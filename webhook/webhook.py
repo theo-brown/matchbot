@@ -8,5 +8,5 @@ def respond():
     payload = request.json
     if payload['ref'] == "refs/head/master":
         print("Pulling repo....")
-        subprocess.run("./bot_update.sh", shell=True)        
+        subprocess.run("./bot_update.sh", shell=True)
     return Response(status=200)
