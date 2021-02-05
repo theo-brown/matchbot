@@ -1,5 +1,5 @@
 import discord
-from discord import Role, User, Embed, Colour
+from discord import Role, User, Embed, Colour, Member
 from discord.ext import commands
 from typing import Union
 from modules import autodelete_functions, channelmap_functions, leaderboard_functions, utility_functions
@@ -70,7 +70,7 @@ async def on_message(msg):
 # MATCH COMMAND
 
 @bot.command()
-async def match(ctx, team1: Union[Role,User,str], team2: Union[Role,User,str], *, dt=''):
+async def match(ctx, team1: Union[Role,Member,str], team2: Union[Role,Member,str], *, dt=''):
     date = "Today"
     time = ''
     dt = dt.split()
@@ -92,7 +92,7 @@ async def match(ctx, team1: Union[Role,User,str], team2: Union[Role,User,str], *
 
     for i,team in enumerate((team1, team2)):
         emoji = f'{i}\N{COMBINING ENCLOSING KEYCAP} '
-        if isinstance(team, User):
+        if isinstance(team, Member):
             embed.add_field(name=emoji+team.nick, value=team.mention)
         elif isinstance(team, Role):
             embed.add_field(name=emoji+team.mention, value='\n'.join(m.mention for m in team.members))
