@@ -20,44 +20,40 @@ async def on_ready():
 
 # Channelmap    
 @bot.command()
-async def channelmap(ctx, *args):
-    if ctx.author.bot:
-        return
-    if ctx.author.guild_permissions.manage_channels:            
-        mentioned_channels = ctx.message.raw_channel_mentions
-        if len(args) == 0:
-            channelmap_text = channelmap_functions.get_as_str()
-            if channelmap_text == "":
-                await ctx.send("`channelmap` is empty")
-            else:
-                await ctx.send(channelmap_text)
-        elif args[0] == "-r" and len(mentioned_channels) == 1:
-            channelmap_functions.remove(mentioned_channels[0])
-            await ctx.send("Removed listening on {} from `channelmap`".format(mentioned_channels[0]))
-        elif len(mentioned_channels) == 2:
-            channelmap_functions.add(mentioned_channels[0], mentioned_channels[1])
-            await ctx.send("Added to `channelmap`:\n Listen on {} -> Send on {}".format(mentioned_channels[0], mentioned_channels[1]))
+@commands.has_permissions(manage_channels=True)
+async def channelmap(ctx, *args):        
+    mentioned_channels = ctx.message.raw_channel_mentions
+    if len(args) == 0:
+        channelmap_text = channelmap_functions.get_as_str()
+        if channelmap_text == "":
+            await ctx.send("`channelmap` is empty")
+        else:
+            await ctx.send(channelmap_text)
+    elif args[0] == "-r" and len(mentioned_channels) == 1:
+        channelmap_functions.remove(mentioned_channels[0])
+        await ctx.send("Removed listening on {} from `channelmap`".format(mentioned_channels[0]))
+    elif len(mentioned_channels) == 2:
+        channelmap_functions.add(mentioned_channels[0], mentioned_channels[1])
+        await ctx.send("Added to `channelmap`:\n Listen on {} -> Send on {}".format(mentioned_channels[0], mentioned_channels[1]))
 
 # Autodelete
 @bot.command()
+@commands.has_permissions(manage_channels=True)
 async def autodelete(ctx, *args):
-    if ctx.author.bot:
-        return
-    if ctx.author.guild_permissions.manage_channels:
-        mentioned_channels = ctx.message.raw_channel_mentions
-        if len(args) == 0:
-            autodelete_text = autodelete_functions.get_as_str()
-            if autodelete_text == "":
-                await ctx.send("`autodelete` is empty")
-            else:
-                await ctx.send(autodelete_text)
-        elif args[0] == "-r" and len(mentioned_channels) == 1:
-            autodelete_functions.remove(mentioned_channels[0])
-            await ctx.send("Removed {} from `autodelete`".format(mentioned_channels[0]))
+    mentioned_channels = ctx.message.raw_channel_mentions
+    if len(args) == 0:
+        autodelete_text = autodelete_functions.get_as_str()
+        if autodelete_text == "":
+            await ctx.send("`autodelete` is empty")
         else:
-            for channel in mentioned_channels:
-                autodelete_functions.add(channel)
-            await ctx.send("Added to `autodelete`:\n {}".format(mentioned_channels))
+            await ctx.send(autodelete_text)
+    elif args[0] == "-r" and len(mentioned_channels) == 1:
+        autodelete_functions.remove(mentioned_channels[0])
+        await ctx.send("Removed {} from `autodelete`".format(mentioned_channels[0]))
+    else:
+        for channel in mentioned_channels:
+            autodelete_functions.add(channel)
+        await ctx.send("Added to `autodelete`:\n {}".format(mentioned_channels))
 
 @bot.listen()
 async def on_message(msg):
@@ -72,8 +68,6 @@ async def on_message(msg):
 
 @bot.command()
 async def match(ctx, *args):
-    if ctx.author.bot:
-        return
     send_channel = ctx.guild.get_channel(channelmap_functions.get_send_channel_id(ctx.channel.id))
     
     date = "Today"
@@ -139,10 +133,7 @@ async def match(ctx, *args):
 
 # RESULT COMMAND
 @bot.command()
-async def result(ctx, *args):
-    if ctx.author.bot:
-        return
-    
+async def result(ctx, *args):    
     if ctx.message.reference is None:
         await ctx.send("Error: `!result` must be sent as a reply to a message.")
         return
@@ -209,8 +200,6 @@ async def result(ctx, *args):
 # LEADERBOARD COMMAND    
 @bot.command()
 async def leaderboard(ctx, *args):
-    if ctx.author.bot:
-        return
     if ctx.author.guild_permissions.manage_channels:
         mentions = ctx.message.mentions
         if len(mentions) == 1:
