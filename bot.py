@@ -20,7 +20,7 @@ async def on_ready():
 
 # Channelmap    
 @bot.command()
-async def channelmap2(ctx, *args):
+async def channelmap(ctx, *args):
     if ctx.author.bot:
         return
     if ctx.author.guild_permissions.manage_channels:            
@@ -40,7 +40,7 @@ async def channelmap2(ctx, *args):
 
 # Autodelete
 @bot.command()
-async def autodelete2(ctx, *args):
+async def autodelete(ctx, *args):
     if ctx.author.bot:
         return
     if ctx.author.guild_permissions.manage_channels:
@@ -71,7 +71,7 @@ async def on_message(msg):
 # MATCH COMMAND
 
 @bot.command()
-async def match2(ctx, *args):
+async def match(ctx, *args):
     if ctx.author.bot:
         return
     send_channel = ctx.guild.get_channel(channelmap_functions.get_send_channel_id(ctx.channel.id))
@@ -139,7 +139,7 @@ async def match2(ctx, *args):
 
 # RESULT COMMAND
 @bot.command()
-async def result2(ctx, *args):
+async def result(ctx, *args):
     if ctx.author.bot:
         return
     
@@ -208,7 +208,7 @@ async def result2(ctx, *args):
 
 # LEADERBOARD COMMAND    
 @bot.command()
-async def leaderboard2(ctx, *args):
+async def leaderboard(ctx, *args):
     if ctx.author.bot:
         return
     if ctx.author.guild_permissions.manage_channels:
