@@ -1,4 +1,4 @@
 #!/bin/bash -e
 source /home/tab53/3.8_env/bin/activate
-PYTHONPATH=/home/tab53/programs/tournaBOT/server/:$PYTHONPATH
+PYTHONPATH=/home/tab53/programs/tournaBOT/webhook/:$PYTHONPATH
 exec gunicorn -w 1 -b unix:webhook.sock wsgi:app
