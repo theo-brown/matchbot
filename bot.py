@@ -70,20 +70,20 @@ async def on_message(msg):
 # MATCH COMMAND
 
 @bot.command()
-async def match(ctx, team1: Union[Role,Member,str], team2: Union[Role,Member,str], *, dt=''):
+async def match(ctx, team1: Union[Role,Member,str], team2: Union[Role,Member,str], *, match_day=''):
     date = "Today"
     time = ''
-    dt = dt.split()
+    match_day = match_day.split()
 
-    if len(dt) == 1:
-        time = " at " + dt[0]
-    elif len(dt) == 2:
-        if dt[0] == '-d':
-            d,date = dt
+    if len(match_day) == 1:  # only time provided
+        time = " at " + match_day[0]
+    elif len(match_day) == 2:  # -d Day or -t Time
+        if match_day[0] == '-d':
+            d,date = match_day
         else:
-            t,time = dt
-    elif len(dt) == 4:
-        d,date,t,time = dt
+            t,time = match_day
+    elif len(match_day) == 4:  # -d Day -t Time
+        d,date,t,time = match_day
 
     timestamp = date + (" at " if time else '') + time
 
