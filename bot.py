@@ -76,7 +76,7 @@ async def match(ctx, team1: Union[Role,Member,str], team2: Union[Role,Member,str
     match_day = match_day.split()
 
     if len(match_day) == 1:  # only time provided
-        time = " at " + match_day[0]
+        time = match_day[0]
     elif len(match_day) == 2:  # -d Day or -t Time
         if match_day[0] == '-d':
             d,date = match_day
@@ -91,11 +91,11 @@ async def match(ctx, team1: Union[Role,Member,str], team2: Union[Role,Member,str
     embed.set_footer(text=timestamp)
 
     for i,team in enumerate((team1, team2)):
-        emoji = f'{i}\N{COMBINING ENCLOSING KEYCAP} '
+        emoji = f'{i+1}\N{COMBINING ENCLOSING KEYCAP} '
         if isinstance(team, Member):
             embed.add_field(name=emoji+team.nick, value=team.mention)
         elif isinstance(team, Role):
-            embed.add_field(name=emoji+team.mention, value='\n'.join(m.mention for m in team.members))
+            embed.add_field(name=emoji+team.name, value='\n'.join(m.mention for m in team.members))
         else:
             embed.add_field(name=emoji+team, value='\u200b')
 
