@@ -20,7 +20,7 @@ def increment(list_user_ids):
     for line in lines:
         if line != "\n":
             user_id, score = line.strip().split(":")
-            scores[user_id] = score
+            scores[user_id] = int(score)
     for user_id in list_user_ids:
         if user_id in scores.keys():
             scores[user_id] += 1
