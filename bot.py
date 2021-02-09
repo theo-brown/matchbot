@@ -1,5 +1,7 @@
 import discord
+from discord import Role, User, Embed, Colour, Member
 from discord.ext import commands
+from typing import Union
 from modules import autodelete_functions, channelmap_functions, leaderboard_functions, utility_functions
 
 # Enable the bot to see members roles etc
@@ -11,7 +13,7 @@ bot = commands.Bot(command_prefix='!', intents=bot_intents)
 
 @bot.event
 async def on_ready():
-	print("Connected as {}".format(bot.user))
+    print("Connected as {}".format(bot.user))
 
 ###############################################################################
 ###############################################################################
@@ -21,7 +23,7 @@ async def on_ready():
 # Channelmap    
 @bot.command()
 @commands.has_permissions(manage_channels=True)
-async def channelmap(ctx, *args):        
+async def channelmap(ctx, *args):
     mentioned_channels = ctx.message.raw_channel_mentions
     if len(args) == 0:
         channelmap_text = channelmap_functions.get_as_str()
@@ -55,77 +57,50 @@ async def autodelete(ctx, *args):
             autodelete_functions.add(channel)
         await ctx.send("Added to `autodelete`:\n {}".format(mentioned_channels))
 
+
 @bot.listen()
 async def on_message(msg):
     if autodelete_functions.in_autodelete(msg.channel.id) and not msg.author.bot:
         await msg.delete(delay=10)
 
-         
+
 ###############################################################################
 ###############################################################################
-            
+
 # MATCH COMMAND
 
 @bot.command()
-async def match(ctx, *args):
-    send_channel = ctx.guild.get_channel(channelmap_functions.get_send_channel_id(ctx.channel.id))
-    
+async def match(ctx, team1: Union[Role,Member,str], team2: Union[Role,Member,str], *, match_day=''):
     date = "Today"
-    time = ""
-    if len(args) == 3:
-        time = " at " + args[2]
-    elif len(args) == 4:
-        date = args[2]
-        time = " at " + args[3]
-    timestamp = date + time
+    time = ''
+    match_day = match_day.split()
 
-    if len(ctx.message.mentions) == 2:
-        # 2 users mentioned
-        team1, team2 = ctx.message.mentions
-        team1_players = team1.mention
-        team2_players = team2.mention
-        team1, team2 = team1.nick, team2.nick
-        
-    elif len(ctx.message.mentions) == 1 and len(ctx.message.role_mentions) == 1:
-        # 1 user 1 role mentioned
-        team1 = ctx.message.mentions[0]
-        team1_players = team1.mention
-        team2 = ctx.message.role_mentions[0]
-        team2_players = ""
-        team2_users = utility_functions.get_users_with_role(ctx, team2.id)
-        for user in team2_users:
-            team2_players += "{}\n".format(user.mention) 
-        team1, team2 = team1.nick, team2.name
-            
-    elif len(ctx.message.role_mentions) == 2:
-        # 2 roles mentioned
-        team1, team2 = ctx.message.role_mentions
-        team1_players, team2_players = "", ""
-        team1_users = utility_functions.get_users_with_role(ctx, team1.id)
-        team2_users = utility_functions.get_users_with_role(ctx, team2.id)
-        for user in team1_users:
-            team1_players += "{}\n".format(user.mention)
-        for user in team2_users:
-            team2_players += "{}\n".format(user.mention)
-        team1, team2 = team1.name, team2.name
-    
-    elif len(ctx.message.role_mentions) == 1:
-        # 1 role mentioned, other is presumed to be a text string of opposing team
-        team1 = ctx.message.role_mentions[0]
-        team2 = args[1]
-        team2_players = "\u200b"
-        team1_players = ""
-        team1_users = utility_functions.get_users_with_role(ctx, team1.id)
-        for user in team1_users:
-            team1_players += "{}\n".format(user.mention) 
-        team1 = team1.name
-    
-    match_embed = discord.Embed(title="**Match scheduled**", color=0xf1c40f)
-    match_embed.add_field(name="1\N{COMBINING ENCLOSING KEYCAP} " + team1, value=team1_players, inline=True)
-    match_embed.add_field(name="2\N{COMBINING ENCLOSING KEYCAP} " + team2, value=team2_players, inline=True)
-    match_embed.set_footer(text=timestamp)
+    if len(match_day) == 1:  # only time provided
+        time = match_day[0]
+    elif len(match_day) == 2:  # -d Day or -t Time
+        if match_day[0] == '-d':
+            d,date = match_day
+        else:
+            t,time = match_day
+    elif len(match_day) == 4:  # -d Day -t Time
+        d,date,t,time = match_day
 
-    match_message = await send_channel.send(embed=match_embed)
+    timestamp = date + (" at " if time else '') + time
+
+    embed = Embed(title="**Match scheduled**", colour=Colour.gold())
+    embed.set_footer(text=timestamp)
+
+    for i,team in enumerate((team1, team2)):
+        emoji = f'{i+1}\N{COMBINING ENCLOSING KEYCAP} '
+        if isinstance(team, Member):
+            embed.add_field(name=emoji+team.nick, value=team.mention)
+        elif isinstance(team, Role):
+            embed.add_field(name=emoji+team.name, value='\n'.join(m.mention for m in team.members))
+        else:
+            embed.add_field(name=emoji+team, value='\u200b')
+
+    send_channel = ctx.guild.get_channel(channelmap_functions.get_send_channel_id(ctx.channel.id))
+    match_message = await send_channel.send(embed=embed)
     await match_message.add_reaction("1\N{COMBINING ENCLOSING KEYCAP}")
     await match_message.add_reaction("2\N{COMBINING ENCLOSING KEYCAP}")
 
@@ -133,7 +108,7 @@ async def match(ctx, *args):
 
 # RESULT COMMAND
 @bot.command()
-async def result(ctx, *args):    
+async def result(ctx, *args):
     if ctx.message.reference is None:
         await ctx.send("Error: `!result` must be sent as a reply to a message.")
         return
@@ -147,16 +122,16 @@ async def result(ctx, *args):
         team1_players = match_embed.fields[0].value
         team2 = match_embed.fields[1].name
         team2_players = match_embed.fields[1].value
-        
+
         scores = {}
         for i in range(len(args) // 2):
-            map_i = args[2*i]
-            score_i = args[2*i+1]
+            map_i = args[2 * i]
+            score_i = args[2 * i + 1]
             scores[map_i] = score_i
-        
+
         maps_won = [0, 0]
         round_diff = 0
-        
+
         for map_played, map_score in scores.items():
             map_score_list = map_score.split('-')
             map_score_t1 = int(map_score_list[0])
@@ -168,7 +143,7 @@ async def result(ctx, *args):
             else:
                 scores[map_played] = "{} - **{}**\n".format(map_score_t1, map_score_t2)
                 maps_won[1] += 1
-                
+
         if maps_won[0] > maps_won[1]:
             winner = team1[3:] + " wins"
             winner_icon = "https://twemoji.maxcdn.com/v/latest/72x72/31-20e3.png"
@@ -177,24 +152,24 @@ async def result(ctx, *args):
             winner = team2[3:] + " wins"
             winner_icon = "https://twemoji.maxcdn.com/v/latest/72x72/32-20e3.png"
             winner_reaction_index = 1
-            
+
         description = ""
         for map_played, map_score in scores.items():
             description += map_played + ": " + map_score
-        
+
         result_embed = discord.Embed(title="**Match result**", color=0x2ecc71)
         result_embed.description = description
         result_embed.add_field(name=team1 + " ({0:+})".format(round_diff), value=team1_players, inline=True)
         result_embed.add_field(name=team2 + " ({0:+})".format(-round_diff), value=team2_players, inline=True)
         result_embed.set_footer(text=winner, icon_url=winner_icon)
         await match_message.reply(embed=result_embed)
-        
+
         correct_reactors = await match_message.reactions[winner_reaction_index].users().flatten()
         correct_reactors = [reactor.id for reactor in correct_reactors[1:]]
         # Remove the bot from the correct reactors
         leaderboard_functions.increment(correct_reactors)
         await match_message.reply(leaderboard_functions.get_as_str())
-    
+
 ###############################################################################
 
 # LEADERBOARD COMMAND    
@@ -214,8 +189,9 @@ async def leaderboard(ctx, *args):
                     leaderboard_functions.add_user(mentions[0].id)
                     await ctx.send("Added {} with score 0".format(mentions[0]))
     await ctx.send(leaderboard_functions.get_as_str())
-        
+
+
 ###############################################################################
 ###############################################################################
-    
+
 utility_functions.run(bot)
