@@ -1,0 +1,19 @@
+name: Deploy Python application to server using SSH
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+    deploy:
+      runs-on: ubuntu-latest
+      steps:
+      - name: SSH to server and run update script
+        run: |
+          umask 0077
+          mkdir -p $HOME/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
+          echo "${{ secrets.SSH_HOST_KEY }}" > $HOME/.ssh/known_hosts
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} ${{ secrets.SCRIPT_PATH }}
