@@ -3,6 +3,7 @@ from discord import Role, User, Embed, Colour, Member
 from discord.ext import commands
 from typing import Union
 from modules import autodelete_functions, channelmap_functions, leaderboard_functions, utility_functions
+from dateutil.parser import parse as parsedatetime
 
 # Enable the bot to see members roles etc
 bot_intents = discord.Intents.default()
@@ -73,17 +74,23 @@ async def on_message(msg):
 async def match(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member, str], *, schedule_args=''):
     date = "Today"
     time = ''
-    schedule_args = schedule_args.split()
-
-    if len(schedule_args) == 1:  # only time provided
-        time = schedule_args[0]
-    elif len(schedule_args) == 2:  # Date and time provided
-        date, time = schedule_args
-
-    timestamp = date + (" at " + time if time else '')
-
+    
+    if schedule_args:
+        datetime_parser = utility_functions.CustomDateParser()
+        try:
+            datetime_obj = parsedatetime(schedule_args, parserinfo=datetime_parser)
+        except ValueError:
+            await ctx.send("Error: invalid date/time.")
+            return
+    
+        for arg in schedule_args.split():
+            if datetime_parser.weekday(arg):
+                date = arg
+            else:
+                time = " at " + datetime_obj.strftime("%H:%M")
+    
     embed = Embed(title="**Match scheduled**", colour=Colour.gold())
-    embed.set_footer(text=timestamp)
+    embed.set_footer(text=date+time)
 
     for i,team in enumerate((team1, team2)):
         emoji = f'{i+1}\N{COMBINING ENCLOSING KEYCAP} '
