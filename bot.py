@@ -70,22 +70,17 @@ async def on_message(msg):
 # MATCH COMMAND
 
 @bot.command()
-async def match(ctx, team1: Union[Role,Member,str], team2: Union[Role,Member,str], *, match_day=''):
+async def match(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member, str], *, schedule_args=''):
     date = "Today"
     time = ''
-    match_day = match_day.split()
+    schedule_args = schedule_args.split()
 
-    if len(match_day) == 1:  # only time provided
-        time = match_day[0]
-    elif len(match_day) == 2:  # -d Day or -t Time
-        if match_day[0] == '-d':
-            d,date = match_day
-        else:
-            t,time = match_day
-    elif len(match_day) == 4:  # -d Day -t Time
-        d,date,t,time = match_day
+    if len(schedule_args) == 1:  # only time provided
+        time = schedule_args[0]
+    elif len(schedule_args) == 2:  # Date and time provided
+        date, time = schedule_args
 
-    timestamp = date + (" at " if time else '') + time
+    timestamp = date + (" at " + time if time else '')
 
     embed = Embed(title="**Match scheduled**", colour=Colour.gold())
     embed.set_footer(text=timestamp)
@@ -93,7 +88,7 @@ async def match(ctx, team1: Union[Role,Member,str], team2: Union[Role,Member,str
     for i,team in enumerate((team1, team2)):
         emoji = f'{i+1}\N{COMBINING ENCLOSING KEYCAP} '
         if isinstance(team, Member):
-            embed.add_field(name=emoji+team.nick, value=team.mention)
+            embed.add_field(name=emoji, value=team.mention)
         elif isinstance(team, Role):
             embed.add_field(name=emoji+team.name, value='\n'.join(m.mention for m in team.members))
         else:
