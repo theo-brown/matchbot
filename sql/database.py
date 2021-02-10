@@ -13,12 +13,10 @@ csr.execute("CREATE TABLE IF NOT EXISTS points(user_id INTEGER,\
                                                leaderboard_id INTEGER,\
                                                points INTEGER)")
 
-csr.execute("CREATE TABLE IF NOT EXISTS channelmap(guild_id INTEGER,\
-                                                   listen_channel_id INTEGER,\
-                                                   send_channel_id INTEGER)")
-
-csr.execute("CREATE TABLE IF NOT EXISTS autodelete(guild_id INTEGER,\
-                                                   autodelete_channel_id INTEGER")
+csr.execute("CREATE TABLE IF NOT EXISTS channels(guild_id INTEGER,\
+                                                 channel_id INTEGER,\
+                                                 send_channel_id INTEGER,\
+                                                 autodelete INTEGER)")
 
 db.commit()
 
