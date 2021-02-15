@@ -3,7 +3,11 @@ from discord import Role, User, Embed, Colour, Member
 from discord.ext import commands
 from typing import Union
 from modules import autodelete_functions, channelmap_functions, leaderboard_functions, utility_functions
-from dateutil.parser import parse as parsedatetime
+from sql import points as pts
+from sql import channels as chn
+from sql import leaderboards as ldb
+import parsedatetime as pdt
+from datetime import datetime
 
 # Enable the bot to see members roles etc
 bot_intents = discord.Intents.default()
@@ -21,47 +25,50 @@ async def on_ready():
 
 # MODERATOR COMMANDS
 
-# Channelmap    
+# Channel    
 @bot.command()
 @commands.has_permissions(manage_channels=True)
-async def channelmap(ctx, *args):
+async def channels(ctx, mode: str, mode_arg=''):
     mentioned_channels = ctx.message.raw_channel_mentions
-    if len(args) == 0:
-        channelmap_text = channelmap_functions.get_as_str()
-        if channelmap_text == "":
-            await ctx.send("`channelmap` is empty")
+    help_str = "Usage: `!channelmap [show/add/del/help] [autodelete <#channel(s)>] [redirect <#channel1> <#channel2>]"
+    if mode == "show":
+        await ctx.send(chn.display(mode_arg))
+    elif mode == "add":
+        if mode_arg == "redirect":
+            chn.set_redirectchannel(*mentioned_channels)
+            await ctx.send("Redirecting bot responses from <#{}> to <#{}>".format(*mentioned_channels),
+                     delete_after=5)
+        elif mode_arg == "autodelete":
+            for channel in mentioned_channels:
+                chn.set_autodelete(channel, True)
+                await ctx.send("Autodeleting bot triggers in <#{}>".format(channel))
         else:
-            await ctx.send(channelmap_text)
-    elif args[0] == "-r" and len(mentioned_channels) == 1:
-        channelmap_functions.remove(mentioned_channels[0])
-        await ctx.send("Removed listening on {} from `channelmap`".format(mentioned_channels[0]))
-    elif len(mentioned_channels) == 2:
-        channelmap_functions.add(mentioned_channels[0], mentioned_channels[1])
-        await ctx.send("Added to `channelmap`:\n Listen on {} -> Send on {}".format(mentioned_channels[0], mentioned_channels[1]))
-
-# Autodelete
-@bot.command()
-@commands.has_permissions(manage_channels=True)
-async def autodelete(ctx, *args):
-    mentioned_channels = ctx.message.raw_channel_mentions
-    if len(args) == 0:
-        autodelete_text = autodelete_functions.get_as_str()
-        if autodelete_text == "":
-            await ctx.send("`autodelete` is empty")
+            await ctx.send(help_str, delete_after=5)
+    elif mode == "del":
+        if mode_arg == "redirect":
+            for channel in mentioned_channels:
+                chn.set_redirectchannel(channel, channel)
+                await ctx.send("Removed redirecting bot responses from <#{}>".format(channel),
+                               delete_after=5)
+        elif mode_arg == "autodelete":
+            for channel in mentioned_channels:
+                chn.set_autodelete(channel, False)
+                await ctx.send("Removed autodeleting bot triggers in <#{}>".format(channel),
+                         delete_after=5)
         else:
-            await ctx.send(autodelete_text)
-    elif args[0] == "-r" and len(mentioned_channels) == 1:
-        autodelete_functions.remove(mentioned_channels[0])
-        await ctx.send("Removed {} from `autodelete`".format(mentioned_channels[0]))
-    else:
-        for channel in mentioned_channels:
-            autodelete_functions.add(channel)
-        await ctx.send("Added to `autodelete`:\n {}".format(mentioned_channels))
-
+            if mentioned_channels:
+                for channel in mentioned_channels:
+                    chn.delete_row(channel)
+                    await ctx.send("Removing entry <#{}>".format(channel))
+            else:
+                await ctx.send(help_str, delete_after=5)
+    elif mode == "help":
+        await ctx.send(help_str, delete_after=5)
+        
 
 @bot.listen()
 async def on_message(msg):
-    if autodelete_functions.in_autodelete(msg.channel.id) and not msg.author.bot:
+    if chn.get_autodelete(msg.channel.id) and not msg.author.bot:
         await msg.delete(delay=10)
 
 
@@ -71,24 +78,18 @@ async def on_message(msg):
 # MATCH COMMAND
 
 @bot.command()
-async def match(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member, str], *, schedule_args=''):
+async def match2(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member, str], schedule_args=''):
     date = "Today"
     time = ''
+    calendar = pdt.Calendar()
     
-    if schedule_args:
-        datetime_parser = utility_functions.CustomDateParser()
-        try:
-            datetime_obj = parsedatetime(schedule_args, parserinfo=datetime_parser)
-        except ValueError:
-            await ctx.send("Error: invalid date/time.")
-            return
-    
-        for arg in schedule_args.split():
-            if datetime_parser.weekday(arg):
-                date = arg
-            else:
-                time = " at " + datetime_obj.strftime("%H:%M")
-    
+    for arg in schedule_args.split():
+        time_obj, result_flag = calendar.parse(arg)
+        if result_flag == 1: # If this is arg is only a date
+            date = arg
+        elif result_flag == 2: # if this arg is only a time
+            time = " at " + arg
+
     embed = Embed(title="**Match scheduled**", colour=Colour.gold())
     embed.set_footer(text=date+time)
 

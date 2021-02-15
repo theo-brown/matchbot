@@ -3,9 +3,9 @@ import sqlite3
 def create():  
     db = sqlite3.connect('tournabot.db')
     csr = db.cursor()
-    csr.execute("CREATE TABLE IF NOT EXISTS channels(channel_id INTEGER PRIMARY KEY,\
-                                                     send_channel_id INTEGER,\
-                                                     autodelete INTEGER)")
+    csr.execute("CREATE TABLE IF NOT EXISTS channels(channel_id INT PRIMARY KEY,\
+                                                     redirect_channel_id INT,\
+                                                     autodelete INT DEFAULT 0)")
     db.commit()
     db.close()
     
@@ -15,22 +15,58 @@ def clear():
     csr.execute("DELETE FROM channels")
     db.commit()
     db.close()
+
+def display(columns=''):
+    if columns == '':
+        return display_all()
+    elif columns == "autodelete":
+        return display_autodelete()
+    elif columns == "redirect":
+        return display_redirect()
+    else:
+        return "Error: expected an argument from ['', 'autodelete', 'redirect']"
     
-def display():
+def display_all():
     db = sqlite3.connect('tournabot.db')
     csr = db.cursor()
     csr.execute("SELECT * FROM channels")
-    print("channel_id\tsend_channel_id\tautodelete")
+    s = "```\nchannel_id\t\t\tredirect_channel_id\tautodelete"
     for entry in csr.fetchall():
-        print("\n{}\t{}\t{}\t{}".format(*entry))
-
-def add_row(channel_id, guild_id, send_channel_id=0, autodelete=0):
+        s+= "\n{}\t{}\t{}".format(*entry)
+    s += "\n```"
+    db.close()
+    return s
+    
+def display_autodelete():
     db = sqlite3.connect('tournabot.db')
     csr = db.cursor()
-    csr.execute("INSERT INTO channels(channel_id, send_channel_id, autodelete)\
-                 VALUES(?, ?, ?)", (channel_id, send_channel_id, autodelete))
+    csr.execute("SELECT channel_id, autodelete FROM channels")
+    s = "```channel_id\t\t\tautodelete"
+    for entry in csr.fetchall():
+        s+= "\n{}\t{}".format(*entry)
+    s += "\n```"
+    db.close()
+    return s
+    
+def display_redirect():
+    db = sqlite3.connect('tournabot.db')
+    csr = db.cursor()
+    csr.execute("SELECT channel_id, redirect_channel_id FROM channels")
+    s = "```channel_id\t\t\tredirect_channel_id"
+    for entry in csr.fetchall():
+        s+= "\n{}\t{}".format(*entry)
+    s += "\n```"
+    db.close()
+    return s
+
+def add_row(channel_id, redirect_channel_id=0, autodelete=0):
+    db = sqlite3.connect('tournabot.db')
+    csr = db.cursor()
+    csr.execute("INSERT INTO channels(channel_id, redirect_channel_id, autodelete)\
+                 VALUES(?, ?, ?)", (channel_id, redirect_channel_id, autodelete))
     db.commit()
     db.close()
+
 
 def delete_row(channel_id):
     db = sqlite3.connect('tournabot.db')
@@ -39,20 +75,21 @@ def delete_row(channel_id):
     db.commit()
     db.close()
 
-def set_autodelete(channel_id, autodelete: bool):
+def set_autodelete(channel_id, autodelete=True):
     db = sqlite3.connect('tournabot.db')
     csr = db.cursor()
-    csr.execute("UPDATE channels SET autodelete =? WHERE channel_id =?",
-                (int(autodelete), channel_id))
+    csr.execute("INSERT INTO channels(channel_id, autodelete) VALUES(?, ?)\
+                ON CONFLICT(channel_id) DO UPDATE SET autodelete=excluded.autodelete", 
+                (channel_id, int(autodelete)))
     db.commit()
     db.close()
 
-def set_sendchannel(channel_id, send_channel_id):
+def set_redirectchannel(channel_id, redirect_channel_id):
     db = sqlite3.connect('tournabot.db')
     csr = db.cursor()
-    csr.execute("UPDATE channels SET send_channel_id =? \
-                WHERE channel_id =?",
-                (send_channel_id, channel_id))
+    csr.execute("INSERT INTO channels(channel_id, redirect_channel_id) VALUES(?, ?)\
+                ON CONFLICT(channel_id) DO UPDATE SET redirect_channel_id=excluded.redirect_channel_id", 
+                (channel_id, redirect_channel_id))
     db.commit()
     db.close()
 
@@ -61,15 +98,23 @@ def get_autodelete(channel_id):
     csr = db.cursor()
     csr.execute("SELECT autodelete FROM channels WHERE channel_id =?",
                 (channel_id,))
-    autodelete = csr.fetchone()[0]
+    output = csr.fetchone()
+    if output:
+        autodelete = output[0]
+    else:
+        autodelete = False
     db.close()
     return bool(autodelete)
 
-def get_send_channel(channel_id):
+def get_redirect_channel(channel_id):
     db = sqlite3.connect('tournabot.db')
     csr = db.cursor()
-    csr.execute("SELECT send_channel_id FROM channels WHERE channel_id =?",
+    csr.execute("SELECT redirect_channel_id FROM channels WHERE channel_id =?",
                 (channel_id,))
-    send_channel_id = csr.fetchone()[0]
+    output = csr.fetchone()
+    if output:
+        redirect_channel_id = output[0]
+    else:
+        redirect_channel_id = channel_id
     db.close()
-    return send_channel_id
+    return redirect_channel_id
