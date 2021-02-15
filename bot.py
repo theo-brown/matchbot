@@ -30,7 +30,7 @@ async def on_ready():
 @commands.has_permissions(manage_channels=True)
 async def channels(ctx, mode: str, mode_arg=''):
     mentioned_channels = ctx.message.raw_channel_mentions
-    help_str = "Usage: `!channelmap [show/add/del/help] [autodelete <#channel(s)>] [redirect <#channel1> <#channel2>]"
+    help_str = "Usage: `!channels [show/add/del/help] [autodelete <#channel(s)>] [redirect <#channel1> <#channel2>]`"
     if mode == "show":
         await ctx.send(chn.display(mode_arg))
     elif mode == "add":
@@ -102,7 +102,7 @@ async def match2(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member
         else:
             embed.add_field(name=emoji+team, value='\u200b')
 
-    send_channel = ctx.guild.get_channel(channelmap_functions.get_send_channel_id(ctx.channel.id))
+    send_channel = ctx.guild.get_channel(chn.get_redirect_channel(ctx.channel.id))
     match_message = await send_channel.send(embed=embed)
     await match_message.add_reaction("1\N{COMBINING ENCLOSING KEYCAP}")
     await match_message.add_reaction("2\N{COMBINING ENCLOSING KEYCAP}")
