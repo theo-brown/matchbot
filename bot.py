@@ -2,7 +2,7 @@ import discord
 from discord import Role, User, Embed, Colour, Member
 from discord.ext import commands
 from typing import Union
-from modules import autodelete_functions, channelmap_functions, leaderboard_functions, utility_functions
+from modules import leaderboard_functions, utility_functions
 from sql import points as pts
 from sql import channels as chn
 from sql import leaderboards as ldb
