@@ -67,7 +67,6 @@ def add_row(channel_id, redirect_channel_id=0, autodelete=0):
     db.commit()
     db.close()
 
-
 def delete_row(channel_id):
     db = sqlite3.connect('tournabot.db')
     csr = db.cursor()
