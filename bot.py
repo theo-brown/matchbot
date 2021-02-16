@@ -2,7 +2,7 @@ import discord
 from discord import Role, User, Embed, Colour, Member
 from discord.ext import commands
 from typing import Union
-from modules import leaderboard_functions, utility_functions
+from modules import utility_functions
 from sql import channels as chn
 from sql import leaderboards as ldb
 import parsedatetime as pdt
@@ -14,6 +14,10 @@ bot_intents.members = True
 
 # Create a bot instance
 bot = commands.Bot(command_prefix='!', intents=bot_intents)
+
+# Create the sql tables if they don't exist
+chn.create()
+ldb.create()
 
 @bot.event
 async def on_ready():
@@ -27,7 +31,7 @@ async def on_ready():
 # Channel    
 @bot.command()
 @commands.has_permissions(manage_channels=True)
-async def channels(ctx, mode: str, mode_arg=''):
+async def channels(ctx, mode="show", mode_arg=''):
     mentioned_channels = ctx.message.raw_channel_mentions
     help_str = "Usage: `!channels [show/add/del/help] [autodelete <#channel(s)>] [redirect <#channel1> <#channel2>]`"
     if mode == "show":
@@ -112,10 +116,10 @@ async def match2(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member
 @bot.command()
 async def result2(ctx, *args):
     if ctx.message.reference is None:
-        await ctx.send("Error: `!result` must be sent as a reply to a message.")
+        await ctx.send("Error: `!result` must be sent as a reply to a match message.")
         return
     elif len(args) % 2:
-        await ctx.send("Error: please supply an even number of arguments (MAP and SCORE)")
+        await ctx.send("Error: please supply an even number of arguments (MAP/GAME and SCORE)")
         return
     else:
         match_message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
@@ -158,7 +162,8 @@ async def result2(ctx, *args):
         description = ""
         for map_played, map_score in scores.items():
             description += map_played + ": " + map_score
-
+        
+        # Send result embed
         result_embed = discord.Embed(title="**Match result**", color=0x2ecc71)
         result_embed.description = description
         result_embed.add_field(name=team1 + " ({0:+})".format(round_diff), value=team1_players, inline=True)
@@ -166,11 +171,16 @@ async def result2(ctx, *args):
         result_embed.set_footer(text=winner, icon_url=winner_icon)
         await match_message.reply(embed=result_embed)
 
+        # Update predictions leaderboard for this channel
         correct_reactors = await match_message.reactions[winner_reaction_index].users().flatten()
-        correct_reactors = [reactor.id for reactor in correct_reactors[1:]]
-        # Remove the bot from the correct reactors
-        leaderboard_functions.increment(correct_reactors)
-        await match_message.reply(leaderboard_functions.get_as_str())
+        incorrect_reactors = await match_message.reactions[not winner_reaction_index].users().flatten()
+        correct_reactors = [reactor for reactor in correct_reactors 
+                            if reactor not in incorrect_reactors
+                            and reactor.mention not in team1_players + team2_players]
+        for user in correct_reactors:
+            ldb.add_points(match_message.channel.id, user.id, 1)
+        
+        await match_message.reply(ldb.get_message(match_message.channel.id))
 
 ###############################################################################
 

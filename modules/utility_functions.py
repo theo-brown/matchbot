@@ -6,13 +6,6 @@ def run(bot):
     bot.run(bot_token)
 
 ###############################################################################
-
-from os import scandir
-def clear_data():
-    for file in scandir(r"data"):
-        open(file.path, "w").close()
-
-###############################################################################
 from dateutil.parser import parserinfo
 
 class CustomDateParser(parserinfo):
