@@ -62,7 +62,7 @@ def display_redirect():
 def add_row(channel_id, redirect_channel_id=0, autodelete=0):
     db = sqlite3.connect('tournabot.db')
     csr = db.cursor()
-    csr.execute("INSERT INTO channels(channel_id, redirect_channel_id, autodelete)\
+    csr.execute("INSERT OR REPLACE INTO channels(channel_id, redirect_channel_id, autodelete)\
                  VALUES(?, ?, ?)", (channel_id, redirect_channel_id, autodelete))
     db.commit()
     db.close()
@@ -77,8 +77,7 @@ def delete_row(channel_id):
 def set_autodelete(channel_id, autodelete=True):
     db = sqlite3.connect('tournabot.db')
     csr = db.cursor()
-    csr.execute("INSERT INTO channels(channel_id, autodelete) VALUES(?, ?)\
-                ON CONFLICT(channel_id) DO UPDATE SET autodelete=excluded.autodelete", 
+    csr.execute("INSERT OR REPLACE INTO channels(channel_id, autodelete) VALUES(?, ?)", 
                 (channel_id, int(autodelete)))
     db.commit()
     db.close()
@@ -86,8 +85,7 @@ def set_autodelete(channel_id, autodelete=True):
 def set_redirectchannel(channel_id, redirect_channel_id):
     db = sqlite3.connect('tournabot.db')
     csr = db.cursor()
-    csr.execute("INSERT INTO channels(channel_id, redirect_channel_id) VALUES(?, ?)\
-                ON CONFLICT(channel_id) DO UPDATE SET redirect_channel_id=excluded.redirect_channel_id", 
+    csr.execute("INSERT OR REPLACE INTO channels(channel_id, redirect_channel_id) VALUES(?, ?)", 
                 (channel_id, redirect_channel_id))
     db.commit()
     db.close()
