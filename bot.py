@@ -3,7 +3,6 @@ from discord import Role, User, Embed, Colour, Member
 from discord.ext import commands
 from typing import Union
 from modules import leaderboard_functions, utility_functions
-from sql import points as pts
 from sql import channels as chn
 from sql import leaderboards as ldb
 import parsedatetime as pdt
@@ -37,33 +36,33 @@ async def channels(ctx, mode: str, mode_arg=''):
         if mode_arg == "redirect":
             chn.set_redirectchannel(*mentioned_channels)
             await ctx.send("Redirecting bot responses from <#{}> to <#{}>".format(*mentioned_channels),
-                     delete_after=5)
+                     delete_after=10)
         elif mode_arg == "autodelete":
             for channel in mentioned_channels:
                 chn.set_autodelete(channel, True)
                 await ctx.send("Autodeleting bot triggers in <#{}>".format(channel))
         else:
-            await ctx.send(help_str, delete_after=5)
+            await ctx.send(help_str, delete_after=10)
     elif mode == "del":
         if mode_arg == "redirect":
             for channel in mentioned_channels:
                 chn.set_redirectchannel(channel, channel)
                 await ctx.send("Removed redirecting bot responses from <#{}>".format(channel),
-                               delete_after=5)
+                               delete_after=10)
         elif mode_arg == "autodelete":
             for channel in mentioned_channels:
                 chn.set_autodelete(channel, False)
                 await ctx.send("Removed autodeleting bot triggers in <#{}>".format(channel),
-                         delete_after=5)
+                         delete_after=10)
         else:
             if mentioned_channels:
                 for channel in mentioned_channels:
                     chn.delete_row(channel)
                     await ctx.send("Removing entry <#{}>".format(channel))
             else:
-                await ctx.send(help_str, delete_after=5)
+                await ctx.send(help_str, delete_after=10)
     elif mode == "help":
-        await ctx.send(help_str, delete_after=5)
+        await ctx.send(help_str, delete_after=10)
         
 
 @bot.listen()
@@ -111,7 +110,7 @@ async def match2(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member
 
 # RESULT COMMAND
 @bot.command()
-async def result(ctx, *args):
+async def result2(ctx, *args):
     if ctx.message.reference is None:
         await ctx.send("Error: `!result` must be sent as a reply to a message.")
         return
@@ -177,21 +176,45 @@ async def result(ctx, *args):
 
 # LEADERBOARD COMMAND    
 @bot.command()
-async def leaderboard(ctx, *args):
+async def leaderboard2(ctx, *args):
+    args = list(args)
+    if len(ctx.message.channel_mentions) == 0:
+        leaderboard_channel_id = ctx.channel.id
+    elif len(ctx.message.channel_mentions) == 1:
+        leaderboard_channel_id = ctx.message.channel_mentions[0].id
+        args.remove(ctx.message.channel_mentions[0].mention)
+    else:
+        await ctx.send("Error: expected 0 or 1 channel mentions")
+        return
     if ctx.author.guild_permissions.manage_channels:
-        mentions = ctx.message.mentions
-        if len(mentions) == 1:
-            if args[0] == "-s" and len(args) == 3:
-                leaderboard_functions.set_user_score(mentions[0].id, args[2])
-                await ctx.send("Set {}'s score to {}".format(mentions[0], args[2]))
-            elif args[0] == "-a":
-                if len(args) == 3:
-                    leaderboard_functions.add_user(mentions[0].id, args[2])
-                    await ctx.send("Added {} with score {}".format(mentions[0], args[2]))
-                elif len(args) == 2:
-                    leaderboard_functions.add_user(mentions[0].id)
-                    await ctx.send("Added {} with score 0".format(mentions[0]))
-    await ctx.send(leaderboard_functions.get_as_str())
+        if len(ctx.message.mentions) == 1:
+            user = ctx.message.mentions[0]
+            args.remove(user.mention)
+        elif len(ctx.message.mentions) > 1:
+            await ctx.send("Error: expected 0 or 1 user mentions")
+            return
+        if "add" in args:
+            # This keyword can be used to add a new row, or add points to an existing entry
+            # See leaderboards.add_row for example
+            args.remove("add")
+            if args:
+                points = args[-1]
+            else:
+                points = 0
+            ldb.add_row(leaderboard_channel_id, user.id, points)
+            await ctx.send("Added row: <#{}> <@{}> {}pts\n*If row existed, points were added to that row's points*".format(leaderboard_channel_id, user.id, points))
+            return
+        elif "del" in args:
+            ldb.delete_row(leaderboard_channel_id, user.id)
+            await ctx.send("Deleted row: <#{}> <@{}>".format(leaderboard_channel_id, user.id))
+            return
+        elif "set" in args:
+            args.remove("set")
+            points = args[-1]
+            ldb.set_points(leaderboard_channel_id, user.id, points)
+            await ctx.send("Set points: <#{}> <@{}> {}pts".format(leaderboard_channel_id, user.id, points))
+            return
+    await ctx.send(ldb.get_message(leaderboard_channel_id))
 
 
 ###############################################################################
