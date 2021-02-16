@@ -194,8 +194,9 @@ async def leaderboard2(ctx, *args):
             await ctx.send("Error: expected 0 or 1 user mentions")
             return
         if "add" in args:
-            # This keyword can be used to add a new row, or add points to an existing entry
-            # See leaderboards.add_row for example
+            # This keyword can be used to add a new row, or add points to an
+            # existing entry. See leaderboards.add_row for why (it's all done
+            # in sqlite rather than python)
             args.remove("add")
             if args:
                 points = args[-1]
