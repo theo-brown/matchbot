@@ -26,7 +26,6 @@ async def on_ready():
 
 # MODERATOR COMMANDS
 
-# Channel
 @bot.command()
 @commands.has_permissions(manage_channels=True)
 async def channels(ctx, mode="show", mode_arg=''):
@@ -162,12 +161,12 @@ async def result(ctx, *args):
     elif games_won[1] > games_won[0]:
         winner_emote = "2\N{COMBINING ENCLOSING KEYCAP}"
         loser_emote = "1\N{COMBINING ENCLOSING KEYCAP}"
-        footertext = teams[1][3:] + " wins",
+        footertext = teams[1][3:] + " wins"
         footericon = "https://twemoji.maxcdn.com/v/latest/72x72/32-20e3.png"
     elif games_won[0] == games_won[1]:
         winner_emote, loser_emote = None, None
-        footertext = "Match tied",
-        footericon = "https://twemoji.maxcdn.com/v/latest/72x72/1f522.png"
+        footertext = "Match tied"
+        footericon = "https://twemoji.maxcdn.com/v/latest/72x72/1faa2.png"
 
     # Round diff is (team 1 score - team 2 score)
     result_embed.add_field(name=f"{teams[0]} ({round_diff:+})", value=players[0])
@@ -175,19 +174,29 @@ async def result(ctx, *args):
     result_embed.set_footer(text=footertext, icon_url=footericon)
     await match_message.reply(embed=result_embed)
 
-    # Award points to users that made correct predictions
-    correct, incorrect = set(), set()
-    for emote, users in zip((winner_emote, loser_emote), (correct, incorrect)):
-        reaction = utils.get(match_message.reactions, emoji=emote)
-        async for user in reaction.users():
-            users.add(user)
+    # If there's a winner, award points to users that made correct predictions
+    if winner_emote is not None:
+        # 'correct' is a set of users that reacted with the emote of the winner
+        # 'incorrect' is a set of users that reacted with the emote of the loser
+        correct, incorrect = set(), set()
+        for emote, users in zip((winner_emote, loser_emote),
+                                (correct, incorrect)):
+            # Get the reaction object of this emote
+            reaction = utils.get(match_message.reactions, emoji=emote)
+            # Iterate through everyone who used this emote
+            async for user in reaction.users():
+                # Exclude anyone involved in this match
+                if user.mention not in players[0] + players[1]:
+                    users.add(user)
 
-    players_set = {user.id for user in match_message.mentions}
-    for user in correct - set().union(incorrect, players_set):
-        ldb.add_points(match_message.channel.id, user.id, 1)
+        all_reactors = set().union(correct, incorrect)
+        if bool(all_reactors): # If there's somebody who reacted with one of the winner/loser emotes
+            for user in correct - incorrect: # Exclude users that also reacted incorrectly
+                ldb.add_points(match_message.channel.id, user.id, 1)
 
-    await match_message.reply(ldb.get_message(match_message.channel.id),
-                              allowed_mentions=AllowedMentions(users=list(set().union(incorrect, correct))))
+            # Anyone who voted will be mentioned
+            await match_message.reply(ldb.get_message(match_message.channel.id),
+                                      allowed_mentions=AllowedMentions(users=list(all_reactors)))
 
 ###############################################################################
 
