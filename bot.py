@@ -2,7 +2,6 @@ import discord
 from discord import Role, User, Embed, Colour, Member
 from discord.ext import commands
 from typing import Union
-from modules import utility_functions
 from sql import channels as chn
 from sql import leaderboards as ldb
 import parsedatetime as pdt
@@ -81,7 +80,7 @@ async def on_message(msg):
 # MATCH COMMAND
 
 @bot.command()
-async def match2(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member, str], schedule_args=''):
+async def match(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member, str], schedule_args=''):
     date = "Today"
     time = ''
     calendar = pdt.Calendar()
@@ -114,7 +113,7 @@ async def match2(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member
 
 # RESULT COMMAND
 @bot.command()
-async def result2(ctx, *args):
+async def result(ctx, *args):
     if ctx.message.reference is None:
         await ctx.send("Error: `!result` must be sent as a reply to a match message.")
         return
@@ -186,7 +185,7 @@ async def result2(ctx, *args):
 
 # LEADERBOARD COMMAND    
 @bot.command()
-async def leaderboard2(ctx, *args):
+async def leaderboard(ctx, *args):
     args = list(args)
     if len(ctx.message.channel_mentions) == 0:
         leaderboard_channel_id = ctx.channel.id
@@ -231,4 +230,6 @@ async def leaderboard2(ctx, *args):
 ###############################################################################
 ###############################################################################
 
-utility_functions.run(bot)
+with open('bot_token.txt') as f:
+    bot_token = f.read().strip()
+bot.run(bot_token)
