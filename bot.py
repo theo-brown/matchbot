@@ -2,8 +2,10 @@ import discord
 from discord import Role, User, Embed, Colour, Member
 from discord.ext import commands
 from typing import Union
-from modules import autodelete_functions, channelmap_functions, leaderboard_functions, utility_functions
-from dateutil.parser import parse as parsedatetime
+from sql import channels as chn
+from sql import leaderboards as ldb
+import parsedatetime as pdt
+from datetime import datetime
 
 # Enable the bot to see members roles etc
 bot_intents = discord.Intents.default()
@@ -11,6 +13,10 @@ bot_intents.members = True
 
 # Create a bot instance
 bot = commands.Bot(command_prefix='!', intents=bot_intents)
+
+# Create the sql tables if they don't exist
+chn.create()
+ldb.create()
 
 @bot.event
 async def on_ready():
@@ -21,47 +27,50 @@ async def on_ready():
 
 # MODERATOR COMMANDS
 
-# Channelmap    
+# Channel    
 @bot.command()
 @commands.has_permissions(manage_channels=True)
-async def channelmap(ctx, *args):
+async def channels(ctx, mode="show", mode_arg=''):
     mentioned_channels = ctx.message.raw_channel_mentions
-    if len(args) == 0:
-        channelmap_text = channelmap_functions.get_as_str()
-        if channelmap_text == "":
-            await ctx.send("`channelmap` is empty")
+    help_str = "Usage: `!channels [show/add/del/help] [autodelete <#channel(s)>] [redirect <#channel1> <#channel2>]`"
+    if mode == "show":
+        await ctx.send(chn.display(mode_arg))
+    elif mode == "add":
+        if mode_arg == "redirect":
+            chn.set_redirectchannel(*mentioned_channels)
+            await ctx.send("Redirecting bot responses from <#{}> to <#{}>".format(*mentioned_channels),
+                     delete_after=10)
+        elif mode_arg == "autodelete":
+            for channel in mentioned_channels:
+                chn.set_autodelete(channel, True)
+                await ctx.send("Autodeleting bot triggers in <#{}>".format(channel))
         else:
-            await ctx.send(channelmap_text)
-    elif args[0] == "-r" and len(mentioned_channels) == 1:
-        channelmap_functions.remove(mentioned_channels[0])
-        await ctx.send("Removed listening on {} from `channelmap`".format(mentioned_channels[0]))
-    elif len(mentioned_channels) == 2:
-        channelmap_functions.add(mentioned_channels[0], mentioned_channels[1])
-        await ctx.send("Added to `channelmap`:\n Listen on {} -> Send on {}".format(mentioned_channels[0], mentioned_channels[1]))
-
-# Autodelete
-@bot.command()
-@commands.has_permissions(manage_channels=True)
-async def autodelete(ctx, *args):
-    mentioned_channels = ctx.message.raw_channel_mentions
-    if len(args) == 0:
-        autodelete_text = autodelete_functions.get_as_str()
-        if autodelete_text == "":
-            await ctx.send("`autodelete` is empty")
+            await ctx.send(help_str, delete_after=10)
+    elif mode == "del":
+        if mode_arg == "redirect":
+            for channel in mentioned_channels:
+                chn.set_redirectchannel(channel, channel)
+                await ctx.send("Removed redirecting bot responses from <#{}>".format(channel),
+                               delete_after=10)
+        elif mode_arg == "autodelete":
+            for channel in mentioned_channels:
+                chn.set_autodelete(channel, False)
+                await ctx.send("Removed autodeleting bot triggers in <#{}>".format(channel),
+                         delete_after=10)
         else:
-            await ctx.send(autodelete_text)
-    elif args[0] == "-r" and len(mentioned_channels) == 1:
-        autodelete_functions.remove(mentioned_channels[0])
-        await ctx.send("Removed {} from `autodelete`".format(mentioned_channels[0]))
-    else:
-        for channel in mentioned_channels:
-            autodelete_functions.add(channel)
-        await ctx.send("Added to `autodelete`:\n {}".format(mentioned_channels))
-
+            if mentioned_channels:
+                for channel in mentioned_channels:
+                    chn.delete_row(channel)
+                    await ctx.send("Removing entry <#{}>".format(channel))
+            else:
+                await ctx.send(help_str, delete_after=10)
+    elif mode == "help":
+        await ctx.send(help_str, delete_after=10)
+        
 
 @bot.listen()
 async def on_message(msg):
-    if autodelete_functions.in_autodelete(msg.channel.id) and not msg.author.bot:
+    if chn.get_autodelete(msg.channel.id) and not msg.author.bot:
         await msg.delete(delay=10)
 
 
@@ -71,24 +80,18 @@ async def on_message(msg):
 # MATCH COMMAND
 
 @bot.command()
-async def match(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member, str], *, schedule_args=''):
+async def match(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member, str], schedule_args=''):
     date = "Today"
     time = ''
+    calendar = pdt.Calendar()
     
-    if schedule_args:
-        datetime_parser = utility_functions.CustomDateParser()
-        try:
-            datetime_obj = parsedatetime(schedule_args, parserinfo=datetime_parser)
-        except ValueError:
-            await ctx.send("Error: invalid date/time.")
-            return
-    
-        for arg in schedule_args.split():
-            if datetime_parser.weekday(arg):
-                date = arg
-            else:
-                time = " at " + datetime_obj.strftime("%H:%M")
-    
+    for arg in schedule_args.split():
+        time_obj, result_flag = calendar.parse(arg)
+        if result_flag == 1: # If this is arg is only a date
+            date = arg
+        elif result_flag == 2: # if this arg is only a time
+            time = " at " + arg
+
     embed = Embed(title="**Match scheduled**", colour=Colour.gold())
     embed.set_footer(text=date+time)
 
@@ -101,7 +104,7 @@ async def match(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member,
         else:
             embed.add_field(name=emoji+team, value='\u200b')
 
-    send_channel = ctx.guild.get_channel(channelmap_functions.get_send_channel_id(ctx.channel.id))
+    send_channel = ctx.guild.get_channel(chn.get_redirect_channel(ctx.channel.id))
     match_message = await send_channel.send(embed=embed)
     await match_message.add_reaction("1\N{COMBINING ENCLOSING KEYCAP}")
     await match_message.add_reaction("2\N{COMBINING ENCLOSING KEYCAP}")
@@ -112,10 +115,10 @@ async def match(ctx, team1: Union[Role, Member, str], team2: Union[Role, Member,
 @bot.command()
 async def result(ctx, *args):
     if ctx.message.reference is None:
-        await ctx.send("Error: `!result` must be sent as a reply to a message.")
+        await ctx.send("Error: `!result` must be sent as a reply to a match message.")
         return
     elif len(args) % 2:
-        await ctx.send("Error: please supply an even number of arguments (MAP and SCORE)")
+        await ctx.send("Error: please supply an even number of arguments (MAP/GAME and SCORE)")
         return
     else:
         match_message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
@@ -158,7 +161,8 @@ async def result(ctx, *args):
         description = ""
         for map_played, map_score in scores.items():
             description += map_played + ": " + map_score
-
+        
+        # Send result embed
         result_embed = discord.Embed(title="**Match result**", color=0x2ecc71)
         result_embed.description = description
         result_embed.add_field(name=team1 + " ({0:+})".format(round_diff), value=team1_players, inline=True)
@@ -166,34 +170,66 @@ async def result(ctx, *args):
         result_embed.set_footer(text=winner, icon_url=winner_icon)
         await match_message.reply(embed=result_embed)
 
+        # Update predictions leaderboard for this channel
         correct_reactors = await match_message.reactions[winner_reaction_index].users().flatten()
-        correct_reactors = [reactor.id for reactor in correct_reactors[1:]]
-        # Remove the bot from the correct reactors
-        leaderboard_functions.increment(correct_reactors)
-        await match_message.reply(leaderboard_functions.get_as_str())
+        incorrect_reactors = await match_message.reactions[not winner_reaction_index].users().flatten()
+        correct_reactors = [reactor for reactor in correct_reactors 
+                            if reactor not in incorrect_reactors
+                            and reactor.mention not in team1_players + team2_players]
+        for user in correct_reactors:
+            ldb.add_points(match_message.channel.id, user.id, 1)
+        
+        await match_message.reply(ldb.get_message(match_message.channel.id))
 
 ###############################################################################
 
 # LEADERBOARD COMMAND    
 @bot.command()
 async def leaderboard(ctx, *args):
+    args = list(args)
+    if len(ctx.message.channel_mentions) == 0:
+        leaderboard_channel_id = ctx.channel.id
+    elif len(ctx.message.channel_mentions) == 1:
+        leaderboard_channel_id = ctx.message.channel_mentions[0].id
+        args.remove(ctx.message.channel_mentions[0].mention)
+    else:
+        await ctx.send("Error: expected 0 or 1 channel mentions")
+        return
     if ctx.author.guild_permissions.manage_channels:
-        mentions = ctx.message.mentions
-        if len(mentions) == 1:
-            if args[0] == "-s" and len(args) == 3:
-                leaderboard_functions.set_user_score(mentions[0].id, args[2])
-                await ctx.send("Set {}'s score to {}".format(mentions[0], args[2]))
-            elif args[0] == "-a":
-                if len(args) == 3:
-                    leaderboard_functions.add_user(mentions[0].id, args[2])
-                    await ctx.send("Added {} with score {}".format(mentions[0], args[2]))
-                elif len(args) == 2:
-                    leaderboard_functions.add_user(mentions[0].id)
-                    await ctx.send("Added {} with score 0".format(mentions[0]))
-    await ctx.send(leaderboard_functions.get_as_str())
+        if len(ctx.message.mentions) == 1:
+            user = ctx.message.mentions[0]
+            args.remove(user.mention)
+        elif len(ctx.message.mentions) > 1:
+            await ctx.send("Error: expected 0 or 1 user mentions")
+            return
+        if "add" in args:
+            # This keyword can be used to add a new row, or add points to an
+            # existing entry. See leaderboards.add_row for why (it's all done
+            # in sqlite rather than python)
+            args.remove("add")
+            if args:
+                points = args[-1]
+            else:
+                points = 0
+            ldb.add_row(leaderboard_channel_id, user.id, points)
+            await ctx.send("Added row: <#{}> <@{}> {}pts\n*If row existed, points were added to that row's points*".format(leaderboard_channel_id, user.id, points))
+            return
+        elif "del" in args:
+            ldb.delete_row(leaderboard_channel_id, user.id)
+            await ctx.send("Deleted row: <#{}> <@{}>".format(leaderboard_channel_id, user.id))
+            return
+        elif "set" in args:
+            args.remove("set")
+            points = args[-1]
+            ldb.set_points(leaderboard_channel_id, user.id, points)
+            await ctx.send("Set points: <#{}> <@{}> {}pts".format(leaderboard_channel_id, user.id, points))
+            return
+    await ctx.send(ldb.get_message(leaderboard_channel_id))
 
 
 ###############################################################################
 ###############################################################################
 
-utility_functions.run(bot)
+with open('bot_token.txt') as f:
+    bot_token = f.read().strip()
+bot.run(bot_token)
