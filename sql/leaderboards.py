@@ -1,8 +1,10 @@
 import sqlite3
 from operator import itemgetter
 
+database_file = 'tournabot.db'
+
 def create():  
-    db = sqlite3.connect('tournabot.db')
+    db = sqlite3.connect(database_file)
     csr = db.cursor()
     csr.execute("CREATE TABLE IF NOT EXISTS leaderboards(leaderboard_channel_id INTEGER, \
                                                          user_id INTEGER, \
@@ -12,14 +14,14 @@ def create():
     db.close()
     
 def clear():
-    db = sqlite3.connect('tournabot.db')
+    db = sqlite3.connect(database_file)
     csr = db.cursor()
     csr.execute("DELETE FROM leaderboards")
     db.commit()
     db.close()
 
 def display():
-    db = sqlite3.connect('tournabot.db')
+    db = sqlite3.connect(database_file)
     csr = db.cursor()
     csr.execute("SELECT * FROM leaderboards")
     s = "leaderboard_channel_id\tuser_id\tpoints"
@@ -29,7 +31,7 @@ def display():
     return s
 
 def add_row(leaderboard_channel_id, user_id, points):
-    db = sqlite3.connect('tournabot.db')
+    db = sqlite3.connect(database_file)
     csr = db.cursor()
     csr.execute("INSERT INTO leaderboards(leaderboard_channel_id, user_id, points) \
                  VALUES(?, ?, ?) ON CONFLICT(leaderboard_channel_id, user_id) \
@@ -39,7 +41,7 @@ def add_row(leaderboard_channel_id, user_id, points):
     db.close()
 
 def delete_row(leaderboard_channel_id, user_id):
-    db = sqlite3.connect('tournabot.db')
+    db = sqlite3.connect(database_file)
     csr = db.cursor()
     csr.execute("DELETE FROM leaderboards WHERE leaderboard_channel_id=? AND user_id=?",
                 (leaderboard_channel_id, user_id))
@@ -50,7 +52,7 @@ def add_points(leaderboard_channel_id, user_id, points):
     add_row(leaderboard_channel_id, user_id, points)
 
 def set_points(leaderboard_channel_id, user_id, points):
-    db = sqlite3.connect('tournabot.db')
+    db = sqlite3.connect(database_file)
     csr = db.cursor()
     csr.execute("INSERT INTO leaderboards(leaderboard_channel_id, user_id, points) \
                  VALUES(?, ?, ?) ON CONFLICT(leaderboard_channel_id, user_id) \
@@ -60,7 +62,7 @@ def set_points(leaderboard_channel_id, user_id, points):
     db.close()
    
 def get_list(leaderboard_channel_id):
-    db = sqlite3.connect('tournabot.db')
+    db = sqlite3.connect(database_file)
     csr = db.cursor()
     csr.execute("SELECT user_id, points FROM leaderboards WHERE leaderboard_channel_id=? \
                 ORDER BY points", (leaderboard_channel_id,))
