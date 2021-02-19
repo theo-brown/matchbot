@@ -202,7 +202,7 @@ async def result(ctx, *args):
 
 # LEADERBOARD COMMAND
 @bot.command()
-async def leaderboard(ctx, *args):
+async def leaderboard2(ctx, *args):
     args = list(args)
     if len(ctx.message.channel_mentions) == 0:
         leaderboard_channel_id = ctx.channel.id
@@ -241,7 +241,7 @@ async def leaderboard(ctx, *args):
             ldb.set_points(leaderboard_channel_id, user.id, points)
             await ctx.send("Set points: <#{}> <@{}> {}pts".format(leaderboard_channel_id, user.id, points))
             return
-    await ctx.send(ldb.get_message(leaderboard_channel_id))
+    await ctx.send(ldb.get_message(leaderboard_channel_id), allowed_mentions=AllowedMentions(users=False))
 
 
 ###############################################################################
