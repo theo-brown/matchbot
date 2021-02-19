@@ -142,7 +142,7 @@ async def result(ctx, *args):
             round_diff += score1 - score2
             score1_str = f"**{score1}**" if score1 >= score2 else score1
             score2_str = f"**{score2}**" if score1 <= score2 else score2
-            result_embed.description += f"{game}{score1_str} - {score2_str}"
+            result_embed.description += f"{game}{score1_str} - {score2_str}\n"
             game = '' # Game must be reset to avoid duplicates
 
             # Wins give a point to winner, draws give half a point each
