@@ -1,7 +1,7 @@
 import sqlite3
 from operator import itemgetter
 
-database_file = 'test.db'
+database_file = 'tournabot.db'
 
 def create():  
     db = sqlite3.connect(database_file)
