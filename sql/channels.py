@@ -5,9 +5,11 @@ database_file = 'tournabot.db'
 def create():  
     db = sqlite3.connect(database_file)
     csr = db.cursor()
-    csr.execute("CREATE TABLE IF NOT EXISTS channels(channel_id INT PRIMARY KEY,\
-                                                     redirect_channel_id INT,\
-                                                     autodelete INT DEFAULT 0)")
+    csr.execute("""
+                CREATE TABLE IF NOT EXISTS channels(channel_id INT PRIMARY KEY,
+                                                    redirect_channel_id INT,
+                                                    autodelete INT DEFAULT 0)
+                """)
     db.commit()
     db.close()
     
@@ -64,8 +66,10 @@ def display_redirect():
 def add_row(channel_id, redirect_channel_id=0, autodelete=0):
     db = sqlite3.connect(database_file)
     csr = db.cursor()
-    csr.execute("INSERT OR REPLACE INTO channels(channel_id, redirect_channel_id, autodelete)\
-                 VALUES(?, ?, ?)", (channel_id, redirect_channel_id, autodelete))
+    csr.execute("""
+                INSERT OR REPLACE INTO channels(channel_id, redirect_channel_id, autodelete)
+                 VALUES(?, ?, ?)
+                 """, (channel_id, redirect_channel_id, autodelete))
     db.commit()
     db.close()
 
@@ -79,15 +83,20 @@ def delete_row(channel_id):
 def set_autodelete(channel_id, autodelete=True):
     db = sqlite3.connect(database_file)
     csr = db.cursor()
-    csr.execute("INSERT OR REPLACE INTO channels(channel_id, autodelete) VALUES(?, ?)", 
-                (channel_id, int(autodelete)))
+    csr.execute("""
+                INSERT OR REPLACE INTO channels(channel_id, autodelete)
+                VALUES(?, ?)
+                """, (channel_id, int(autodelete)))
     db.commit()
     db.close()
 
 def set_redirectchannel(channel_id, redirect_channel_id):
     db = sqlite3.connect(database_file)
     csr = db.cursor()
-    csr.execute("INSERT OR REPLACE INTO channels(channel_id, redirect_channel_id) VALUES(?, ?)", 
+    csr.execute("""
+                INSERT OR REPLACE INTO channels(channel_id, redirect_channel_id)
+                VALUES(?, ?)
+                """, 
                 (channel_id, redirect_channel_id))
     db.commit()
     db.close()
