@@ -112,7 +112,7 @@ async def match(ctx, team1: Union[Role, Member, str],
 
 # RESULT COMMAND
 @bot.command()
-async def result2(ctx, *args):
+async def result(ctx, *args):
     if ctx.message.reference is None:
         await ctx.send("Error: `!result` must be sent as a reply to a match message.")
         return
