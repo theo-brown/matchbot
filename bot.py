@@ -202,7 +202,7 @@ async def result(ctx, *args):
 
 # LEADERBOARD COMMAND
 @bot.command()
-async def leaderboard2(ctx, *args):
+async def leaderboard(ctx, *args):
     args = list(args)
     if len(ctx.message.channel_mentions) == 0:
         leaderboard_channel_id = ctx.channel.id
