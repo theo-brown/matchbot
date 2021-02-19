@@ -112,7 +112,7 @@ async def match(ctx, team1: Union[Role, Member, str],
 
 # RESULT COMMAND
 @bot.command()
-async def result(ctx, *args):
+async def result2(ctx, *args):
     if ctx.message.reference is None:
         await ctx.send("Error: `!result` must be sent as a reply to a match message.")
         return
@@ -190,9 +190,11 @@ async def result(ctx, *args):
                     users.add(user)
 
         all_reactors = set().union(correct, incorrect)
+        correct = correct - incorrect # Exclude users that also reacted incorrectly
+
         if bool(all_reactors): # If there's somebody who reacted with one of the winner/loser emotes
-            for user in correct - incorrect: # Exclude users that also reacted incorrectly
-                ldb.add_points(match_message.channel.id, user.id, 1)
+            correct_ids = [user.id for user in correct]
+            ldb.increment(match_message.channel.id, *correct_ids)
 
             # Anyone who voted will be mentioned
             await match_message.reply(ldb.get_message(match_message.channel.id),
