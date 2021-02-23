@@ -4,7 +4,7 @@ from discord.ext import commands
 from typing import Union
 from sql import channels as chn
 from sql import leaderboards as ldb
-import parsedatetime as pdt
+import util
 
 # Enable the bot to see members roles etc
 bot_intents = discord.Intents.default()
@@ -79,20 +79,12 @@ async def on_message(msg):
 
 @bot.command()
 async def match(ctx, team1: Union[Role, Member, str],
-                team2: Union[Role, Member, str], schedule_args=''):
-    date = "Today"
-    time = ''
-    calendar = pdt.Calendar()
-
-    for arg in schedule_args.split():
-        time_obj, result_flag = calendar.parse(arg)
-        if result_flag == 1: # If this arg is only a date
-            date = arg
-        elif result_flag == 2: # If this arg is only a time
-            time = " at " + arg
-
+                team2: Union[Role, Member, str], *schedule_args):
+    schedule_args = " ".join(schedule_args)
+    # Parse schedule string
+    datetime_obj, datetime_str = util.parse_date(schedule_args)
     embed = Embed(title="**Match scheduled**", colour=Colour.gold())
-    embed.set_footer(text=date+time)
+    embed.set_footer(text=datetime_str)
 
     for i, team in enumerate((team1, team2)):
         emoji = f'{i+1}\N{COMBINING ENCLOSING KEYCAP} '
@@ -126,50 +118,33 @@ async def result(ctx, *args):
     match_embed = match_message.embeds[0]
     teams = (match_embed.fields[0].name, match_embed.fields[1].name)
     players = (match_embed.fields[0].value, match_embed.fields[1].value)
-    result_embed = Embed(title="**Match Result**", description='', colour=Colour.green())
 
-    games_won = [0, 0]
+    result_dict, result_str = util.parse_results(' '.join(args))
+    
     round_diff = 0
+    games_won = [0, 0, 0] # Tie, team 1 wins, team 2 wins
+    for r in result_dict:
+        round_diff += r['score'][0] - r['score'][1]
+        games_won[r['winner']] += 1 # r['winner'] is 0 if tie, 1 if t1, 2 if t2
 
-    game = ''
-    for arg in args:
-        if '-' not in arg:
-            # Args without '-' are names of games/maps
-            game = f"{arg}: "
-        else:
-            # Args with '-' are scorelines
-            score1, score2 = map(int, arg.split('-'))
-            round_diff += score1 - score2
-            score1_str = f"**{score1}**" if score1 >= score2 else score1
-            score2_str = f"**{score2}**" if score1 <= score2 else score2
-            result_embed.description += f"{game}{score1_str} - {score2_str}\n"
-            game = '' # Game must be reset to avoid duplicates
-
-            # Wins give a point to winner, draws give half a point each
-            games_won[0] += (score1 > score2)
-            games_won[1] += (score1 < score2)
-            if score1 == score2:
-                games_won[0] += 1/2
-                games_won[1] += 1/2
-
-    # Determine winner and display in embed
-    if games_won[0] > games_won[1]:
+    if games_won[1] > games_won[2]:
         winner_emote = "1\N{COMBINING ENCLOSING KEYCAP}"
         loser_emote = "2\N{COMBINING ENCLOSING KEYCAP}"
         footertext = teams[0][3:] + " wins"
         footericon = "https://twemoji.maxcdn.com/v/latest/72x72/31-20e3.png"
-    elif games_won[1] > games_won[0]:
+    elif games_won[2] > games_won[1]:
         winner_emote = "2\N{COMBINING ENCLOSING KEYCAP}"
         loser_emote = "1\N{COMBINING ENCLOSING KEYCAP}"
         footertext = teams[1][3:] + " wins"
         footericon = "https://twemoji.maxcdn.com/v/latest/72x72/32-20e3.png"
-    elif games_won[0] == games_won[1]:
+    elif games_won[1] == games_won[2]:
         winner_emote, loser_emote = None, None
         footertext = "Match tied"
         footericon = "https://twemoji.maxcdn.com/v/latest/72x72/1faa2.png"
 
-    # Round diff is (team 1 score - team 2 score)
-    result_embed.add_field(name=f"{teams[0]} ({round_diff:+})", value=players[0])
+    result_embed = Embed(title="**Match Result**", description='', colour=Colour.green())
+    result_embed.description = result_str
+    result_embed.add_field(name=f"{teams[0]} ({round_diff:+})", value=players[0]) # Round diff is (team 1 score - team 2 score)
     result_embed.add_field(name=f"{teams[1]} ({-round_diff:+})", value=players[1])
     result_embed.set_footer(text=footertext, icon_url=footericon)
     await match_message.reply(embed=result_embed)
