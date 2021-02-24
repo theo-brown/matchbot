@@ -17,9 +17,20 @@ bot = commands.Bot(command_prefix='!', intents=bot_intents)
 chn.create()
 ldb.create()
 
+###############################################################################
+###############################################################################
+
+# EVENTS
+
 @bot.event
 async def on_ready():
     print("Connected as {}".format(bot.user))
+
+@bot.listen()
+async def on_message(message):
+    await bot.process_commands(message)
+    if chn.get_autodelete(message.channel.id) and not message.author.bot:
+        await message.delete(delay=10)
 
 ###############################################################################
 ###############################################################################
@@ -64,12 +75,6 @@ async def channels(ctx, mode="show", mode_arg=''):
                 await ctx.send(help_str, delete_after=10)
     elif mode == "help":
         await ctx.send(help_str, delete_after=10)
-
-
-@bot.listen()
-async def on_message(msg):
-    if chn.get_autodelete(msg.channel.id) and not msg.author.bot:
-        await msg.delete(delay=10)
 
 
 ###############################################################################
@@ -200,6 +205,84 @@ async def result(ctx, *args):
             await match_message.reply(ldb.get_message(match_message.channel.id),
                                       allowed_mentions=AllowedMentions(users=list(all_reactors)))
 
+###############################################################################
+
+# VETO COMMAND
+@bot.command()
+async def veto(ctx, team1: Union[Role, Member], team2: Union[Role, Member]):
+    map_pool = ["Cobblestone",
+                "Inferno",
+                "Nuke",
+                "Overpass",
+                "Shortdust",
+                "Train",
+                "Vertigo"]
+    
+    veto = [[0, 'ban'], 
+            [1, 'ban'],
+            [0, 'pick'],
+            [1, 'pick'],
+            [0, 'ban'], 
+            [1, 'ban']]
+    
+    remaining_maps = {f"{i+1}\N{COMBINING ENCLOSING KEYCAP}": m for i, m in enumerate(map_pool)}
+
+    team_names = ["", ""]
+    team_users = [[], []]
+    team_mentions = ["", ""]
+    for i, t in enumerate([team1, team2]):
+        team_mentions[i] = t.mention
+        if isinstance(t, Role):
+            team_users[i] = t.members
+            team_names[i] = t.name
+        elif isinstance(t, Member):
+            team_users[i].append(t)
+            team_names[i] = t.display_name
+            
+    # Set the initial parameters
+    active_team = 0  
+    mode = 'ban'
+    
+    def generate_veto_embed(log):
+        # First generate the string displaying the remaining maps:
+        maps_display = ""
+        for emoji, mapname in remaining_maps.items():
+            maps_display += f"{emoji} {mapname}\n"
+            
+        title = "**Match veto**"
+        header = f"{team_mentions[0]} vs {team_mentions[1]}\n\n"
+        turn = f"{team_names[active_team]} to {mode}"
+    
+        embed = Embed(title=title,
+                     description=header+maps_display+log)
+        embed.set_footer(text=turn)
+        return embed
+    
+    # Send the initial message
+    log="\n\n"
+    veto_message = await ctx.send(embed=generate_veto_embed(log))
+    # Add reactions for all the maps
+    for k in remaining_maps.keys():
+        await veto_message.add_reaction(k)
+    
+    def check_for_veto(reaction, user):
+        return (user in team_users[active_team] 
+                and str(reaction.emoji) in remaining_maps.keys()
+                and reaction.message == veto_message)
+
+    for active_team, mode in veto:
+        # Wait for user to react
+        # On reaction, continue if check_for_veto returns true
+        reaction, user = await bot.wait_for('reaction_add', check=check_for_veto)
+        # Remove the map corresponding to that reaction
+        selected_map = remaining_maps.pop(str(reaction.emoji))
+        if mode == 'pick':
+            log += f"{team_names[active_team]} picked {selected_map}\n"
+        elif mode == 'ban':
+            log += f"{team_names[active_team]} banned {selected_map}\n"
+        await veto_message.edit(embed=generate_veto_embed(log))
+
+    
 ###############################################################################
 
 # LEADERBOARD COMMAND
