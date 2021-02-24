@@ -1,6 +1,6 @@
 import sqlite3
 
-database_file = 'tournabot.db'
+database_file = 'database.db'
 
 def create():  
     db = sqlite3.connect(database_file)
