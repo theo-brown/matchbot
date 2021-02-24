@@ -78,8 +78,8 @@ async def on_message(msg):
 # MATCH COMMAND
 
 @bot.command()
-async def match(ctx, team1: Union[Role, Member, str],
-                team2: Union[Role, Member, str], *schedule_args):
+async def match(ctx, team1: Union[Role, Member], team2: Union[Role, Member], 
+                 *schedule_args):
     schedule_args = " ".join(schedule_args)
     # Parse schedule string
     datetime_obj, datetime_str = util.parse_date(schedule_args)
@@ -91,9 +91,12 @@ async def match(ctx, team1: Union[Role, Member, str],
         if isinstance(team, Member):
             embed.add_field(name=emoji, value=team.mention)
         elif isinstance(team, Role):
-            embed.add_field(name=emoji+team.name, value='\n'.join(m.mention for m in team.members))
+            embed.add_field(name=emoji+team.name, 
+                            value='\n'.join(m.mention for m in team.members))
         else:
-            embed.add_field(name=emoji+team, value='\u200b')
+            await ctx.send(f"Error: teams must be mentioned by role or user "
+                           f"({team} is {type(team)}")
+            return
 
     send_channel = ctx.guild.get_channel(chn.get_redirect_channel(ctx.channel.id))
     match_message = await send_channel.send(embed=embed)
@@ -105,24 +108,46 @@ async def match(ctx, team1: Union[Role, Member, str],
 # RESULT COMMAND
 @bot.command()
 async def result(ctx, *args):
-    if ctx.message.reference is None:
-        await ctx.send("Error: `!result` must be sent as a reply to a match message.")
-        return
+    args = list(args) # we need args to be mutable to be able to remove the team names
     if len(args) == 0:
         await ctx.send("Error: `!result` expects arguments: either scores only "
                        "(e.g. `16-10 15-16 etc`), or maps/games and scores "
                        "e.g. `Map1 16-10 etc`)")
         return
-
-    match_message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-    match_embed = match_message.embeds[0]
-    teams = (match_embed.fields[0].name, match_embed.fields[1].name)
-    players = (match_embed.fields[0].value, match_embed.fields[1].value)
+    match_message = None
+    teams, players = ['', ''], ['', '']
+    if ctx.message.reference is not None:
+        match_message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+        send_result_message = match_message.reply
+        match_embed = match_message.embeds[0]
+        teams = [match_embed.fields[0].name, match_embed.fields[1].name]
+        players = [match_embed.fields[0].value, match_embed.fields[1].value]        
+    else:
+        send_channel = ctx.guild.get_channel(chn.get_redirect_channel(ctx.channel.id))
+        send_result_message = send_channel.send
+        mentions = util.get_all_mentions_in_order(ctx, args)
+        if len(mentions) != 2:
+            await ctx.send("Error: `!result` must be either sent in reply to a"
+                           " `!match` message, or include mentions of two teams"
+                           " (users or roles)")
+            return
+        for i, team in enumerate(mentions):
+            emoji = f'{i+1}\N{COMBINING ENCLOSING KEYCAP} '
+            if isinstance(team, Member):
+                teams[i] = emoji
+                players[i] = team.mention
+            elif isinstance(team, Role):
+                teams[i] = emoji + team.name
+                players[i] = '\n'.join(m.mention for m in team.members)
+            else:
+                await ctx.send(f"Error: teams must be mentioned by role or user "
+                               f"({team} is {type(team)}")
+                return
 
     result_dict, result_str = util.parse_results(' '.join(args))
     
     round_diff = 0
-    games_won = [0, 0, 0] # Tie, team 1 wins, team 2 wins
+    games_won = [0, 0, 0] # Tiess, team 1 wins, team 2 wins
     for r in result_dict:
         round_diff += r['score'][0] - r['score'][1]
         games_won[r['winner']] += 1 # r['winner'] is 0 if tie, 1 if t1, 2 if t2
@@ -147,10 +172,10 @@ async def result(ctx, *args):
     result_embed.add_field(name=f"{teams[0]} ({round_diff:+})", value=players[0]) # Round diff is (team 1 score - team 2 score)
     result_embed.add_field(name=f"{teams[1]} ({-round_diff:+})", value=players[1])
     result_embed.set_footer(text=footertext, icon_url=footericon)
-    await match_message.reply(embed=result_embed)
+    await send_result_message(embed=result_embed)
 
     # If there's a winner, award points to users that made correct predictions
-    if winner_emote is not None:
+    if winner_emote is not None and match_message is not None:
         # 'correct' is a set of users that reacted with the emote of the winner
         # 'incorrect' is a set of users that reacted with the emote of the loser
         correct, incorrect = set(), set()

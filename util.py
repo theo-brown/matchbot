@@ -23,7 +23,7 @@ def parse_results(string):
     # Split around the scores, ignore blank spaces
     # Produces a list of game/map names and scores
     games = [s.strip() for s in regex.split(string) if s.strip()]
-    scores = [s for s in regex.findall(string)]
+    scores = regex.findall(string)
     # If there are no game names, then we need to create an empty games array
     if not len(games):
         games = [''] * len(scores)
@@ -52,3 +52,24 @@ def parse_results(string):
         result_str += game + score + '\n'
 
     return result_dict, result_str
+
+def get_all_mentions_in_order(ctx, args, pop=True):
+    user_regex = re.compile("^<@!?(\d+)>$")
+    role_regex = re.compile("^<@&(\d+)>$")
+    channel_regex = re.compile("^<#(\d+)>$")
+    output = []
+    temp_args = args[:] # Create a copy so that we can remove elements from the original
+    for arg in temp_args:
+        userid = user_regex.match(arg)
+        roleid = role_regex.match(arg)
+        channelid = channel_regex.match(arg)
+        if userid:
+            output.append(ctx.guild.get_member(int(userid.group(1))))
+            if pop: args.remove(arg)
+        elif roleid:
+            output.append(ctx.guild.get_role(int(roleid.group(1))))
+            if pop: args.remove(arg)
+        elif channelid:
+            output.append(ctx.guild.get_channel(int(channelid.group(1))))
+            if pop: args.remove(arg)
+    return output
