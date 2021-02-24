@@ -243,7 +243,7 @@ async def veto(ctx, team1: Union[Role, Member], team2: Union[Role, Member]):
     active_team = 0  
     mode = 'ban'
     
-    def generate_veto_embed(log):
+    def generate_veto_embed(log, footer=True):
         # First generate the string displaying the remaining maps:
         maps_display = ""
         for emoji, mapname in remaining_maps.items():
@@ -255,12 +255,14 @@ async def veto(ctx, team1: Union[Role, Member], team2: Union[Role, Member]):
     
         embed = Embed(title=title,
                      description=header+maps_display+log)
-        embed.set_footer(text=turn)
+        if footer:
+            embed.set_footer(text=turn)
         return embed
     
     # Send the initial message
-    log="\n\n"
-    veto_message = await ctx.send(embed=generate_veto_embed(log))
+    log="\n"
+    veto_embed = generate_veto_embed(log, footer=False)
+    veto_message = await ctx.send(embed=veto_embed)
     # Add reactions for all the maps
     for k in remaining_maps.keys():
         await veto_message.add_reaction(k)
@@ -271,16 +273,25 @@ async def veto(ctx, team1: Union[Role, Member], team2: Union[Role, Member]):
                 and reaction.message == veto_message)
 
     for active_team, mode in veto:
+        await veto_message.edit(embed=generate_veto_embed(log))
         # Wait for user to react
         # On reaction, continue if check_for_veto returns true
         reaction, user = await bot.wait_for('reaction_add', check=check_for_veto)
+        # Remove all of those reactions
+        await veto_message.clear_reaction(reaction.emoji)
         # Remove the map corresponding to that reaction
         selected_map = remaining_maps.pop(str(reaction.emoji))
         if mode == 'pick':
             log += f"{team_names[active_team]} picked {selected_map}\n"
         elif mode == 'ban':
             log += f"{team_names[active_team]} banned {selected_map}\n"
-        await veto_message.edit(embed=generate_veto_embed(log))
+    
+    final_map_emoji = list(remaining_maps.keys())[0]
+    await veto_message.clear_reaction(final_map_emoji)    
+    selected_map = remaining_maps.pop(final_map_emoji)
+    log += f"{selected_map} was left over"
+    await veto_message.edit(embed=generate_veto_embed(log[1:], footer=False))
+
 
     
 ###############################################################################
