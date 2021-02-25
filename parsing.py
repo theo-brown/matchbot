@@ -17,6 +17,7 @@ def parse_date(string):
     time = datetime_obj.strftime(" at %H%M")
     return datetime_obj, day + time
 
+
 def parse_results(string):
     # Expect scores in format ###-###
     regex = re.compile("\d+-\d+")
@@ -53,6 +54,7 @@ def parse_results(string):
 
     return result_dict, result_str
 
+
 def get_all_mentions_in_order(ctx, args, pop=True):
     user_regex = re.compile("^<@!?(\d+)>$")
     role_regex = re.compile("^<@&(\d+)>$")
@@ -73,3 +75,11 @@ def get_all_mentions_in_order(ctx, args, pop=True):
             output.append(ctx.guild.get_channel(int(channelid.group(1))))
             if pop: args.remove(arg)
     return output
+
+def convert_mention_into_id(mention):
+    regex = re.compile("^<(?:@!?|@&|#)(\d+)>$") # matches user mentions, nickname mentions, role mentions and channel mentions
+    match = regex.match(mention)
+    if match:
+        return int(match.group(1))
+    else:
+        raise ValueError(f"mention must be a standard Discord mention string (got {mention})")
