@@ -272,7 +272,7 @@ class VetoMenu(BasicMenu):
             await self.message.clear_reaction(self.get_emoji(finalmap_name))
             finalmap = self.get_map_from_name(finalmap_name)
             self.chosen_maps.append(finalmap)
-            self.post_options += f"{finalmap_name} was left over\n"
+            self.post_options += f"*{finalmap_name} was left over\n*"
         
         self.active_team = self.next_team()
         if self.veto:
