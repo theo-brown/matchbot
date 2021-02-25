@@ -209,113 +209,6 @@ async def result2(ctx, *args):
 ###############################################################################
 
 # VETO COMMAND
-#@bot.command()
-#async def veto(ctx, team1: Union[Role, Member], team2: Union[Role, Member]):
-#    map_pool = {"Cobblestone": 'de_cbble',
-#                "Inferno": 'de_inferno',
-#                "Nuke": 'de_nuke',
-#                "Overpass": 'de_overpass',
-#                "Shortdust": 'de_shortdust',
-#                "Train": 'de_train',
-#                "Vertigo": 'de_vertigo'}
-#    chosen_maps = []
-#    
-#    veto = [[0, 'ban'], 
-#            [1, 'ban'],
-#            [0, 'pick'], [1, 'pick starting side'],
-#            [1, 'pick'], [0, 'pick starting side'],
-#            [0, 'ban'], 
-#            [1, 'ban']]
-#    
-#    remaining_maps = {f"{i+1}\N{COMBINING ENCLOSING KEYCAP}": m for i, m in enumerate(map_pool.keys())}
-#
-#    team_names = ["", ""]
-#    team_users = [[], []]
-#    team_mentions = ["", ""]
-#    for i, t in enumerate([team1, team2]):
-#        team_mentions[i] = t.mention
-#        if isinstance(t, Role):
-#            team_users[i] = t.members
-#            team_names[i] = t.name
-#        elif isinstance(t, Member):
-#            team_users[i].append(t)
-#            team_names[i] = t.display_name
-#            
-#    # Set the initial parameters
-#    active_team = 0  
-#    mode = 'ban'
-#    
-#    def generate_veto_embed(log, footer=True):
-#        # First generate the string displaying the remaining maps:
-#        maps_display = ""
-#        for emoji, mapname in remaining_maps.items():
-#            maps_display += f"{emoji} {mapname}\n"
-#            
-#        title = "**Match veto**"
-#        header = f"{team_mentions[0]} vs {team_mentions[1]}\n\n"
-#        turn = f"{team_names[active_team]} to {mode}"
-#    
-#        embed = Embed(title=title,
-#                     description=header+maps_display+log)
-#        if footer:
-#            embed.set_footer(text=turn)
-#        return embed
-#        
-#    # Send the initial message
-#    log="\n"
-#    veto_embed = generate_veto_embed(log, footer=False)
-#    veto_message = await ctx.send(embed=veto_embed)
-#    # Add reactions for all the maps
-#    for emoji in remaining_maps.keys():
-#        await veto_message.add_reaction(emoji)
-#    
-#    def check_for_veto(reaction, user):
-#        return (user in team_users[active_team] 
-#                and str(reaction.emoji) in remaining_maps.keys()
-#                and reaction.message == veto_message)
-#    
-#    sides_emoji = {"\N{REGIONAL INDICATOR SYMBOL LETTER T}": 'T',
-#                   "\N{REGIONAL INDICATOR SYMBOL LETTER C}": 'CT'}
-#    
-#    def check_for_sides(reaction, user):
-#        return (user in team_users[active_team] 
-#                and str(reaction.emoji) in sides_emoji.keys()
-#                and reaction.message == veto_message)
-#        
-#    for active_team, mode in veto:
-#        if mode == 'pick' or mode == 'ban':
-#            await veto_message.edit(embed=generate_veto_embed(log))
-#            # Wait for user to react
-#            # On reaction, continue if check_for_veto returns true
-#            reaction, user = await bot.wait_for('reaction_add', check=check_for_veto)
-#            # Remove all of those reactions
-#            await veto_message.clear_reaction(reaction.emoji)
-#            # Remove the map corresponding to that reaction
-#            selected_map = remaining_maps.pop(str(reaction.emoji))
-#            if mode == 'pick':
-#                log += f"**{team_names[active_team]} picked {selected_map}\n**"
-#            elif mode == 'ban':
-#                log += f"{team_names[active_team]} banned {selected_map}\n"
-#        if mode == 'pick starting side':
-#            await veto_message.clear_reactions()
-#            for emoji in sides_emoji.keys():
-#                await veto_message.add_reaction(emoji)
-#            await veto_message.edit(embed=generate_veto_embed(log))
-#            # Wait for user to react
-#            # On reaction, continue if check_for_sides returns true
-#            reaction, user = await bot.wait_for('reaction_add', check=check_for_sides)
-#            chosen_side = sides_emoji[str(reaction.emoji)]
-#            log += f"{team_names[active_team]} starting as {chosen_side}\n"
-#            # Remove all of those reactions and replace with map selects
-#            await veto_message.clear_reactions()
-#            for emoji in remaining_maps.keys():
-#                await veto_message.add_reaction(emoji)
-#    
-#    final_map_emoji = list(remaining_maps.keys())[0]
-#    await veto_message.clear_reaction(final_map_emoji)    
-#    selected_map = remaining_maps.pop(final_map_emoji)
-#    log += f"**{selected_map} was left over**"
-#    await veto_message.edit(embed=generate_veto_embed(log[1:], footer=False))
 
 @bot.command()
 async def veto(ctx, team1: Union[Role, Member], team2: Union[Role, Member]):
@@ -334,6 +227,10 @@ async def veto(ctx, team1: Union[Role, Member], team2: Union[Role, Member]):
         reaction, user = await bot.wait_for('reaction_add', check=embed.check_reaction)
         await embed.on_reaction(reaction, user)        
 
+###############################################################################
+
+# TEAM PICK COMMAND
+        
 @bot.command()
 async def teams(ctx, captain1: Member, captain2: Member, *players):
     players_users = []
