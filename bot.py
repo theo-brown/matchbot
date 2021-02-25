@@ -40,7 +40,7 @@ async def on_message(message):
 
 @bot.command()
 @commands.has_permissions(manage_channels=True)
-async def channels2(ctx, mode="show", mode_arg=''):
+async def channels(ctx, mode="show", mode_arg=''):
     mentioned_channels = ctx.message.raw_channel_mentions
     help_str = "Usage: `!channels [show/add/del/help] [autodelete <#channel(s)>] [redirect <#channel1> <#channel2>]`"
     if mode == "show":
@@ -84,7 +84,7 @@ async def channels2(ctx, mode="show", mode_arg=''):
 # MATCH COMMAND
 
 @bot.command()
-async def match2(ctx, team1: Union[Role, Member], team2: Union[Role, Member], 
+async def match(ctx, team1: Union[Role, Member], team2: Union[Role, Member], 
                  *schedule_args):
     schedule_args = " ".join(schedule_args)
     # Parse schedule string
@@ -113,7 +113,7 @@ async def match2(ctx, team1: Union[Role, Member], team2: Union[Role, Member],
 
 # RESULT COMMAND
 @bot.command()
-async def result2(ctx, *args):
+async def result(ctx, *args):
     args = list(args) # we need args to be mutable to be able to remove the team names
     if len(args) == 0:
         await ctx.send("Error: `!result` expects arguments: either scores only "
@@ -253,7 +253,7 @@ async def teams(ctx, captain1: Member, captain2: Member, *players):
 
 # LEADERBOARD COMMAND
 @bot.command()
-async def leaderboard2(ctx, *args):
+async def leaderboard(ctx, *args):
     args = list(args)
     if len(ctx.message.channel_mentions) == 0:
         leaderboard_channel_id = ctx.channel.id
