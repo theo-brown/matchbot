@@ -2,10 +2,10 @@ import discord
 from discord import Role, Embed, Colour, Member, AllowedMentions, utils
 from discord.ext import commands
 from typing import Union
-from sql import channels as chn
-from sql import leaderboards as ldb
+import sql.channels, sql.leaderboards, sql.users
 import parsing, menus
 from classes import Map, Team
+from steam import steamid
 
 # Enable the bot to see members roles etc
 bot_intents = discord.Intents.default()
@@ -15,8 +15,8 @@ bot_intents.members = True
 bot = commands.Bot(command_prefix='!', intents=bot_intents)
 
 # Create the sql tables if they don't exist
-chn.create()
-ldb.create()
+sql.channels.create()
+sql.leaderboards.create()
 
 ###############################################################################
 ###############################################################################
@@ -29,7 +29,7 @@ async def on_ready():
 
 @bot.listen()
 async def on_message(message):
-    if chn.get_autodelete(message.channel.id) and not message.author.bot:
+    if sql.channels.get_autodelete(message.channel.id) and not message.author.bot:
         await message.delete(delay=10)
 
 ###############################################################################
@@ -43,33 +43,33 @@ async def channels(ctx, mode="show", mode_arg=''):
     mentioned_channels = ctx.message.raw_channel_mentions
     help_str = "Usage: `!channels [show/add/del/help] [autodelete <#channel(s)>] [redirect <#channel1> <#channel2>]`"
     if mode == "show":
-        await ctx.send(chn.display(mode_arg))
+        await ctx.send(sql.channels.display(mode_arg))
     elif mode == "add":
         if mode_arg == "redirect":
-            chn.set_redirectchannel(*mentioned_channels)
+            sql.channels.set_redirectchannel(*mentioned_channels)
             await ctx.send("Redirecting bot responses from <#{}> to <#{}>".format(*mentioned_channels),
                      delete_after=10)
         elif mode_arg == "autodelete":
             for channel in mentioned_channels:
-                chn.set_autodelete(channel, True)
+                sql.channels.set_autodelete(channel, True)
                 await ctx.send("Autodeleting bot triggers in <#{}>".format(channel))
         else:
             await ctx.send(help_str, delete_after=10)
     elif mode == "del":
         if mode_arg == "redirect":
             for channel in mentioned_channels:
-                chn.set_redirectchannel(channel, channel)
+                sql.channels.set_redirectchannel(channel, channel)
                 await ctx.send("Removed redirecting bot responses from <#{}>".format(channel),
                                delete_after=10)
         elif mode_arg == "autodelete":
             for channel in mentioned_channels:
-                chn.set_autodelete(channel, False)
+                sql.channels.set_autodelete(channel, False)
                 await ctx.send("Removed autodeleting bot triggers in <#{}>".format(channel),
                          delete_after=10)
         else:
             if mentioned_channels:
                 for channel in mentioned_channels:
-                    chn.delete_row(channel)
+                    sql.channels.delete_row(channel)
                     await ctx.send("Removing entry <#{}>".format(channel))
             else:
                 await ctx.send(help_str, delete_after=10)
@@ -103,7 +103,7 @@ async def match(ctx, team1: Union[Role, Member], team2: Union[Role, Member],
                            f"({team} is {type(team)}")
             return
 
-    send_channel = ctx.guild.get_channel(chn.get_redirect_channel(ctx.channel.id))
+    send_channel = ctx.guild.get_channel(sql.channels.get_redirect_channel(ctx.channel.id))
     match_message = await send_channel.send(embed=embed)
     await match_message.add_reaction("1\N{COMBINING ENCLOSING KEYCAP}")
     await match_message.add_reaction("2\N{COMBINING ENCLOSING KEYCAP}")
@@ -128,7 +128,7 @@ async def result(ctx, *args):
         teams = [match_embed.fields[0].name, match_embed.fields[1].name]
         players = [match_embed.fields[0].value, match_embed.fields[1].value]        
     else:
-        send_channel = ctx.guild.get_channel(chn.get_redirect_channel(ctx.channel.id))
+        send_channel = ctx.guild.get_channel(sql.channels.get_redirect_channel(ctx.channel.id))
         send_result_message = send_channel.send
         mentions = parsing.get_all_mentions_in_order(ctx, args)
         if len(mentions) != 2:
@@ -199,10 +199,10 @@ async def result(ctx, *args):
 
         if bool(all_reactors): # If there's somebody who reacted with one of the winner/loser emotes
             correct_ids = [user.id for user in correct]
-            ldb.increment(match_message.channel.id, *correct_ids)
+            sql.leaderboards.increment(match_message.channel.id, *correct_ids)
 
             # Anyone who voted will be mentioned
-            await match_message.reply(ldb.get_message(match_message.channel.id),
+            await match_message.reply(sql.leaderboards.get_message(match_message.channel.id),
                                       allowed_mentions=AllowedMentions(users=list(all_reactors)))
 
 ###############################################################################
@@ -247,7 +247,18 @@ async def teams(ctx, captain1: Member, captain2: Member, *players):
         reaction, user = await bot.wait_for('reaction_add', check=embed.check_reaction)
         await embed.on_reaction(reaction, user)
         
-        
+###############################################################################
+
+# STEAM COMMAND
+ 
+@bot.command()
+async def steam(ctx, profile_url: str, user=None):
+    if user is None:
+        user = ctx.author
+    steam64_id = steamid.steam64_from_url(profile_url)
+    sql.users.add_steam64_id(steam64_id, user.id)
+    await ctx.send(f"Linked {user.mention} to <{profile_url}>")
+
 ###############################################################################
 
 # LEADERBOARD COMMAND
@@ -278,20 +289,20 @@ async def leaderboard(ctx, *args):
                 points = args[-1]
             else:
                 points = 0
-            ldb.add_row(leaderboard_channel_id, user.id, points)
+            sql.leaderboards.add_row(leaderboard_channel_id, user.id, points)
             await ctx.send("Added row: <#{}> <@{}> {}pts\n*If row existed, points were added to that row's points*".format(leaderboard_channel_id, user.id, points))
             return
         elif "del" in args:
-            ldb.delete_row(leaderboard_channel_id, user.id)
+            sql.leaderboards.delete_row(leaderboard_channel_id, user.id)
             await ctx.send("Deleted row: <#{}> <@{}>".format(leaderboard_channel_id, user.id))
             return
         elif "set" in args:
             args.remove("set")
             points = args[-1]
-            ldb.set_points(leaderboard_channel_id, user.id, points)
+            sql.leaderboards.set_points(leaderboard_channel_id, user.id, points)
             await ctx.send("Set points: <#{}> <@{}> {}pts".format(leaderboard_channel_id, user.id, points))
             return
-    await ctx.send(ldb.get_message(leaderboard_channel_id), allowed_mentions=AllowedMentions(users=False))
+    await ctx.send(sql.leaderboards.get_message(leaderboard_channel_id), allowed_mentions=AllowedMentions(users=False))
 
 
 ###############################################################################
