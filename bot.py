@@ -160,12 +160,22 @@ async def result(ctx, *args):
     if games_won[1] > games_won[2]:
         winner_emote = "1\N{COMBINING ENCLOSING KEYCAP}"
         loser_emote = "2\N{COMBINING ENCLOSING KEYCAP}"
-        footertext = teams[0][3:] + " wins"
+        if teams[0] == "1\N{COMBINING ENCLOSING KEYCAP} ":
+            winner_user_id = parsing.convert_mention_into_id(players[0])
+            winner_user = bot.get_user(winner_user_id)
+            footertext = winner_user.display_name + " wins"
+        else:
+            footertext = teams[0][3:] + " wins"
         footericon = "https://twemoji.maxcdn.com/v/latest/72x72/31-20e3.png"
     elif games_won[2] > games_won[1]:
         winner_emote = "2\N{COMBINING ENCLOSING KEYCAP}"
         loser_emote = "1\N{COMBINING ENCLOSING KEYCAP}"
-        footertext = teams[1][3:] + " wins"
+        if teams[1] == "2\N{COMBINING ENCLOSING KEYCAP} ":
+            winner_user_id = parsing.convert_mention_into_id(players[1])
+            winner_user = bot.get_user(winner_user_id)
+            footertext = winner_user.display_name + " wins"
+        else:
+            footertext = teams[1][3:] + " wins"
         footericon = "https://twemoji.maxcdn.com/v/latest/72x72/32-20e3.png"
     elif games_won[1] == games_won[2]:
         winner_emote, loser_emote = None, None
