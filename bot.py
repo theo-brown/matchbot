@@ -210,7 +210,7 @@ async def result(ctx, *args):
 # VETO COMMAND
 
 @bot.command()
-async def veto2(ctx, team1: Union[Role, Member], team2: Union[Role, Member]):
+async def veto(ctx, team1: Union[Role, Member], team2: Union[Role, Member]):
     map_pool = [Map('Cobblestone', 'de_cbble'),
                 Map('Inferno', 'de_inferno'),
                 Map('Nuke', 'de_nuke'),
