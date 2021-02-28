@@ -8,15 +8,16 @@ import sql.channels, sql.leaderboards, sql.users
 sql.channels.create()
 sql.leaderboards.create()
 
-class ChannelCog(Cog):
+class ChannelCog(Cog, name='Channel management'):
     @Cog.listener()
-    async def on_message(message: Message):
+    async def on_message(self, message: Message):
         if sql.channels.get_autodelete(message.channel.id) and not message.author.bot:
             await message.delete(delay=10)
 
     @command()
     @has_permissions(manage_channels=True)
     async def channels(self, ctx: Context, mode='show', mode_arg=''):
+        "Show and edit the purged and linked channels."
         mentioned_channels = ctx.message.raw_channel_mentions
         help_str = "Usage: `!channels [show/add/del/help] [autodelete <#channel(s)>] [redirect <#channel1> <#channel2>]`"
         if mode == "show":

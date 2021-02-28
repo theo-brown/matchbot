@@ -4,9 +4,10 @@ from discord.ext.commands import *
 from . import Cog
 import sql.leaderboards
 
-class LeaderboardCog(Cog):
+class LeaderboardCog(Cog, name="Pick'em commands"):
     @command()
     async def leaderboard(self, ctx: Context, *args):
+        "Show the pick'ems leaderboard. Moderators can edit scores."
         args = list(args)
         if len(ctx.message.channel_mentions) == 0:
             leaderboard_channel_id = ctx.channel.id

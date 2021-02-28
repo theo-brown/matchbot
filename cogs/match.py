@@ -7,12 +7,11 @@ import parsing
 import sql.channels, sql.leaderboards
 
 
-class MatchCog(Cog):
+class MatchCog(Cog, name='Match commands'):
     @command()
     async def match(self, ctx, team1: Union[Role, Member], team2: Union[Role, Member],
                     *schedule_args):
-        """Schedule a match between two teams."""
-
+        "Schedule a match between two teams."
         schedule_args = " ".join(schedule_args)
         # Parse schedule string
         datetime_obj, datetime_str = parsing.parse_date(schedule_args)
@@ -39,6 +38,7 @@ class MatchCog(Cog):
 
     @command()
     async def result(self, ctx, *args):
+        "Register a match result."
         args = list(args)  # we need args to be mutable to be able to remove the team names
         if len(args) == 0:
             await ctx.send("Error: `!result` expects arguments: either scores only "
