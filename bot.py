@@ -20,7 +20,7 @@ bot.load_extension('cogs.match')
 
 @bot.command()
 async def steam(ctx, profile_url: str, user=None):
-    """Link your steam and discord accounts for server configuration."""
+    "Link your steam and discord accounts for server configuration."
     if user is None:
         user = ctx.author
     steam64_id = steamid.steam64_from_url(profile_url)
