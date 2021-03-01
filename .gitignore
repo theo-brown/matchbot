@@ -1,6 +1,7 @@
 bot_token.txt
 *.db
 .idea
+get5/configs/match.cfg
 
 ############################
 # Default Python .gitignore
