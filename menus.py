@@ -118,7 +118,7 @@ class PickTeamsMenu(BasicMenu):
     def __init__(self, captain1: Member, captain2: Member,
                  players: Iterable[Member]):
         self.captains = [captain1, captain2]
-        self.teams = [Team(captain=captain1), Team(captain=captain2)]
+        self.teams = [Team(captain1), Team(captain2)]
         self.players = {player.mention: player for player in players}
         self.active_captain = captain1
         
