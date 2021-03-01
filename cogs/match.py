@@ -1,6 +1,6 @@
 from typing import Union
 from discord import Embed, Role, Member, Colour, utils, AllowedMentions
-from discord.ext.commands import *
+import discord.ext.commands as cmds
 
 from . import Cog
 import parsing
@@ -8,7 +8,7 @@ import sql.channels, sql.pickems
 
 
 class MatchCog(Cog, name='Match commands'):
-    @command()
+    @cmds.command()
     async def match(self, ctx, team1: Union[Role, Member], team2: Union[Role, Member],
                     *schedule_args):
         "Schedule a match between two teams."
@@ -36,7 +36,7 @@ class MatchCog(Cog, name='Match commands'):
         await match_message.add_reaction("2\N{COMBINING ENCLOSING KEYCAP}")
 
 
-    @command()
+    @cmds.command()
     async def result(self, ctx, *args):
         "Register a match result."
         args = list(args)  # we need args to be mutable to be able to remove the team names
