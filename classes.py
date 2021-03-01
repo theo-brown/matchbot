@@ -1,7 +1,7 @@
 from discord import Member, Role
 
 class Team:
-    def __init__(self, team=None, captain=None, players=[]):
+    def __init__(self, team, captain=None, players=[]):
         if isinstance(team, Role):
             self.players = set(team.members)
             self.name = team.name

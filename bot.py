@@ -19,7 +19,7 @@ bot.load_extension('cogs.lobby')
 bot.load_extension('cogs.match')
 
 @bot.command()
-async def steam(ctx, profile_url: str, user=None):
+async def steam2(ctx, profile_url: str, user=None):
     "Link your steam and discord accounts for server configuration."
     if user is None:
         user = ctx.author
