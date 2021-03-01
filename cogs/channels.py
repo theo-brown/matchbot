@@ -2,11 +2,7 @@ from discord import Message
 from discord.ext.commands import *
 
 from . import Cog
-import sql.channels, sql.leaderboards, sql.users
-
-# Create the sql tables if they don't exist
-sql.channels.create()
-sql.leaderboards.create()
+import sql.channels
 
 class ChannelCog(Cog, name='Channel management'):
     @Cog.listener()

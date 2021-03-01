@@ -11,7 +11,7 @@ import parsing
 class LobbyCog(Cog, name='Pick/ban commands'):
     @command()
     async def veto(self, ctx: Context, team1: Union[Role, Member], team2: Union[Role, Member]):
-        "Start a veto between two teams."
+        """Start a veto between two teams."""
         map_pool = [Map('Cobblestone', 'de_cbble'),
                     Map('Inferno', 'de_inferno'),
                     Map('Nuke', 'de_nuke'),
@@ -29,7 +29,7 @@ class LobbyCog(Cog, name='Pick/ban commands'):
 
     @command()
     async def teams(self, ctx, captain1: Member, captain2: Member, *players):
-        "Start a team pick between two captains."
+        """Start a team pick with two captains."""
         players_users = []
         for player in players:
             if isinstance(player, Member):
