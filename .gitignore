@@ -1,5 +1,6 @@
 bot_token.txt
 *.db
+.idea
 
 ############################
 # Default Python .gitignore
