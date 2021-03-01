@@ -6,7 +6,7 @@ import sql.leaderboards
 
 class LeaderboardCog(Cog, name="Pick'em commands"):
     @command()
-    async def leaderboard2(self, ctx: Context, *args):
+    async def leaderboard(self, ctx: Context, *args):
         "Show the pick'ems leaderboard. Moderators can edit scores."
         args = list(args)
         if len(ctx.message.channel_mentions) == 0:
