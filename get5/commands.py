@@ -3,7 +3,7 @@ from classes import Team, Map
 from typing import Iterable
 
 
-def generate_get5_config(team1: Team, team2: Team, maps: Iterable[Map]):
+def generate_config(team1: Team, team2: Team, maps: Iterable[Map]):
     config = {}
     # Match settings
     config["matchid"] = f"{team1.name} vs {team2.name}"
@@ -17,7 +17,7 @@ def generate_get5_config(team1: Team, team2: Team, maps: Iterable[Map]):
         t["name"] = team.name
         t["players"] = team.get_players_steam_ids()
     
-    with open("match.cfg", 'w') as f:
+    with open("get5/configs/match.cfg", 'w') as f:
         json.dump(config, f)
 
     return config
