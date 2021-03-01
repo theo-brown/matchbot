@@ -9,7 +9,7 @@ import sql.channels, sql.leaderboards
 
 class MatchCog(Cog, name='Match commands'):
     @command()
-    async def match(self, ctx, team1: Union[Role, Member], team2: Union[Role, Member],
+    async def match2(self, ctx, team1: Union[Role, Member], team2: Union[Role, Member],
                     *schedule_args):
         "Schedule a match between two teams."
         schedule_args = " ".join(schedule_args)
@@ -37,7 +37,7 @@ class MatchCog(Cog, name='Match commands'):
 
 
     @command()
-    async def result(self, ctx, *args):
+    async def result2(self, ctx, *args):
         "Register a match result."
         args = list(args)  # we need args to be mutable to be able to remove the team names
         if len(args) == 0:

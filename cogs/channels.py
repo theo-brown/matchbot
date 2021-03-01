@@ -16,7 +16,7 @@ class ChannelCog(Cog, name='Channel management'):
 
     @command()
     @has_permissions(manage_channels=True)
-    async def channels(self, ctx: Context, mode='show', mode_arg=''):
+    async def channels2(self, ctx: Context, mode='show', mode_arg=''):
         "Show and edit the purged and linked channels."
         mentioned_channels = ctx.message.raw_channel_mentions
         help_str = "Usage: `!channels [show/add/del/help] [autodelete <#channel(s)>] [redirect <#channel1> <#channel2>]`"
