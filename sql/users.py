@@ -38,3 +38,31 @@ def add_steam64_id(user_id, steam64_id):
                  """, (user_id, steam64_id))
     db.commit()
     db.close()
+
+def get_steam64_id(user_id):
+    db = sqlite3.connect(database_file)
+    csr = db.cursor()
+    csr.execute("""
+                SELECT steam64_id FROM users
+                 WHERE user_id =?
+                 """, (user_id,))
+    output = csr.fetchone()
+    if output:
+        steam64_id = output[0]
+    else:
+        steam64_id = 0
+    db.close()
+    return steam64_id
+
+def get_steam64_ids(user_ids):
+    db = sqlite3.connect(database_file)
+    csr = db.cursor()
+    parameters = ", ".join(['?']*len(user_ids))
+    csr.execute(f"""
+                SELECT steam64_id FROM users
+                 WHERE user_id IN ({parameters})
+                 """, user_ids)
+    output = csr.fetchall()
+    steam64_ids = [i[0] for i in output]
+    db.close()
+    return steam64_ids

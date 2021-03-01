@@ -29,7 +29,7 @@ async def steam(ctx, profile_url: str, user=None):
     if user is None:
         user = ctx.author
     steam64_id = steamid.steam64_from_url(profile_url)
-    sql.users.add_steam64_id(steam64_id, user.id)
+    sql.users.add_steam64_id(user.id, steam64_id)
     await ctx.send(f"Linked {user.mention} to <{profile_url}>")
 
 with open('bot_token.txt') as f:

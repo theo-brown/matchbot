@@ -1,6 +1,7 @@
 from typing import Union
 from discord import Role, Member
 from discord.ext.commands import *
+from get5 import generate_get5_config
 
 from . import Cog
 from classes import Map, Team
@@ -26,6 +27,8 @@ class LobbyCog(Cog, name='Pick/ban commands'):
         while embed.remaining_options:
             reaction, user = await self.bot.wait_for('reaction_add', check=embed.check_reaction)
             await embed.on_reaction(reaction, user)
+        print("Generating get5 config...")
+        generate_get5_config(team1, team2, embed.chosen_maps)
 
     @command()
     async def teams(self, ctx, captain1: Member, captain2: Member, *players):
