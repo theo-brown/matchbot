@@ -4,7 +4,7 @@ from discord.ext.commands import *
 
 from . import Cog
 import parsing
-import sql.channels, sql.leaderboards
+import sql.channels, sql.pickems
 
 
 class MatchCog(Cog, name='Match commands'):
@@ -136,10 +136,10 @@ class MatchCog(Cog, name='Match commands'):
 
             if bool(all_reactors):  # If there's somebody who reacted with one of the winner/loser emotes
                 correct_ids = [user.id for user in correct]
-                sql.leaderboards.increment(match_message.channel.id, *correct_ids)
+                sql.pickems.increment(match_message.channel.id, *correct_ids)
 
                 # Anyone who voted will be mentioned
-                await match_message.reply(sql.leaderboards.get_message(match_message.channel.id),
+                await match_message.reply(sql.pickems.get_message(match_message.channel.id),
                                           allowed_mentions=AllowedMentions(users=list(all_reactors)))
 
 def setup(bot):
