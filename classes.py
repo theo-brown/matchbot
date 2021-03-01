@@ -1,4 +1,5 @@
 from discord import Member, Role
+import sql.users 
 
 class Team:
     def __init__(self, team, captain=None, players=[]):
@@ -27,6 +28,13 @@ class Team:
         for player in self.players:
             s += f"{player.mention}\n"
         return s
+    
+    def get_players_ids(self):
+        return [player.id for player in self.players]
+    
+    def get_players_steam_ids(self):
+        return sql.users.get_steam64_ids(self.get_players_ids())
+    
 
 class Map:
     def __init__(self, readable_name, ingame_name):
