@@ -1,5 +1,5 @@
 from discord import Message
-from discord.ext.commands import *
+import discord.ext.commands as cmds
 
 from . import Cog
 import sql.channels
@@ -10,9 +10,9 @@ class ChannelCog(Cog, name='Channel management'):
         if sql.channels.get_autodelete(message.channel.id) and not message.author.bot:
             await message.delete(delay=10)
 
-    @command()
-    @has_permissions(manage_channels=True)
-    async def channels(self, ctx: Context, mode='show', mode_arg=''):
+    @cmds.command()
+    @cmds.has_permissions(manage_channels=True)
+    async def channels(self, ctx: cmds.Context, mode='show', mode_arg=''):
         "Show and edit the purged and linked channels."
         mentioned_channels = ctx.message.raw_channel_mentions
         help_str = "Usage: `!channels [show/add/del/help] [autodelete <#channel(s)>] [redirect <#channel1> <#channel2>]`"

@@ -1,6 +1,6 @@
 from typing import Union
 from discord import Role, Member
-from discord.ext.commands import *
+import discord.ext.commands as cmds
 
 from . import Cog
 from classes import Map, Team
@@ -9,8 +9,8 @@ import parsing
 
 
 class LobbyCog(Cog, name='Pick/ban commands'):
-    @command()
-    async def veto(self, ctx: Context, team1: Union[Role, Member], team2: Union[Role, Member]):
+    @cmds.command()
+    async def veto(self, ctx: cmds.Context, team1: Union[Role, Member], team2: Union[Role, Member]):
         """Start a veto between two teams."""
         map_pool = [Map('Cobblestone', 'de_cbble'),
                     Map('Inferno', 'de_inferno'),
@@ -27,7 +27,7 @@ class LobbyCog(Cog, name='Pick/ban commands'):
             reaction, user = await self.bot.wait_for('reaction_add', check=embed.check_reaction)
             await embed.on_reaction(reaction, user)
 
-    @command()
+    @cmds.command()
     async def teams(self, ctx, captain1: Member, captain2: Member, *players):
         """Start a team pick with two captains."""
         players_users = []

@@ -1,12 +1,12 @@
 from discord import AllowedMentions
-from discord.ext.commands import *
+import discord.ext.commands as cmds
 
 from . import Cog
 import sql.pickems
 
 class PickemsCog(Cog, name="Pick'em prediction commands"):
-    @command()
-    async def pickems(self, ctx: Context, *args):
+    @cmds.command()
+    async def pickems(self, ctx: cmds.Context, *args):
         "Show the pick'ems leaderboard. Moderators can edit scores."
         args = list(args)
         if len(ctx.message.channel_mentions) == 0:
