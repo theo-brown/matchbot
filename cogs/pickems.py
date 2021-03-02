@@ -33,22 +33,22 @@ class PickemsCog(Cog, name="Pick'em prediction commands"):
                     points = args[-1]
                 else:
                     points = 0
-                sql.pickems.add_row(pickem_channel_id, user.id, points)
+                await sql.pickems.add_row(pickem_channel_id, user.id, points)
                 await ctx.send(
                     "Added row: <#{}> <@{}> {}pts\n*If row existed, points were added to that row's points*".format(
                         pickem_channel_id, user.id, points))
                 return
             elif "del" in args:
-                sql.pickems.delete_row(pickem_channel_id, user.id)
+                await sql.pickems.delete_row(pickem_channel_id, user.id)
                 await ctx.send("Deleted row: <#{}> <@{}>".format(pickem_channel_id, user.id))
                 return
             elif "set" in args:
                 args.remove("set")
                 points = args[-1]
-                sql.pickems.set_points(pickem_channel_id, user.id, points)
+                await sql.pickems.set_points(pickem_channel_id, user.id, points)
                 await ctx.send("Set points: <#{}> <@{}> {}pts".format(pickem_channel_id, user.id, points))
                 return
-        await ctx.send(sql.pickems.get_message(pickem_channel_id),
+        await ctx.send(await sql.pickems.get_message(pickem_channel_id),
                        allowed_mentions=AllowedMentions(users=False))
 
 def setup(bot):
