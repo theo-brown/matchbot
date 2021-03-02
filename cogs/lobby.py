@@ -59,7 +59,10 @@ class LobbyCog(Cog, name='Pick/ban commands'):
             reaction, user = await self.bot.wait_for('reaction_add', check=embed.check_reaction)
             await embed.on_reaction(reaction, user)
 
-        await self.veto(ctx, embed.teams[0], embed.teams[1])
+    @cmds.command()
+    async def startmatch(self, ctx):
+        await get5.commands.send_rcon_loadmatch()
+        await ctx.send("`connect 194.147.121.4:27083; password 12345678`")
 
 def setup(bot):
     bot.add_cog(LobbyCog(bot))
