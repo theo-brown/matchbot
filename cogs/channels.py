@@ -7,7 +7,7 @@ import sql.channels
 class ChannelCog(Cog, name='Channel management'):
     @Cog.listener()
     async def on_message(self, message: Message):
-        if sql.channels.get_autodelete(message.channel.id) and not message.author.bot:
+        if await sql.channels.get_autodelete(message.channel.id) and not message.author.bot:
             await message.delete(delay=10)
 
     @cmds.command()
@@ -17,33 +17,33 @@ class ChannelCog(Cog, name='Channel management'):
         mentioned_channels = ctx.message.raw_channel_mentions
         help_str = "Usage: `!channels [show/add/del/help] [autodelete <#channel(s)>] [redirect <#channel1> <#channel2>]`"
         if mode == "show":
-            await ctx.send(sql.channels.display(mode_arg))
+            await ctx.send(await sql.channels.display(mode_arg))
         elif mode == "add":
             if mode_arg == "redirect":
-                sql.channels.set_redirectchannel(*mentioned_channels)
+                await sql.channels.set_redirectchannel(*mentioned_channels)
                 await ctx.send("Redirecting bot responses from <#{}> to <#{}>".format(*mentioned_channels),
                                delete_after=10)
             elif mode_arg == "autodelete":
                 for channel in mentioned_channels:
-                    sql.channels.set_autodelete(channel, True)
+                    await sql.channels.set_autodelete(channel, True)
                     await ctx.send("Autodeleting bot triggers in <#{}>".format(channel))
             else:
                 await ctx.send(help_str, delete_after=10)
         elif mode == "del":
             if mode_arg == "redirect":
                 for channel in mentioned_channels:
-                    sql.channels.set_redirectchannel(channel, channel)
+                    await sql.channels.set_redirectchannel(channel, channel)
                     await ctx.send("Removed redirecting bot responses from <#{}>".format(channel),
                                    delete_after=10)
             elif mode_arg == "autodelete":
                 for channel in mentioned_channels:
-                    sql.channels.set_autodelete(channel, False)
+                    await sql.channels.set_autodelete(channel, False)
                     await ctx.send("Removed autodeleting bot triggers in <#{}>".format(channel),
                                    delete_after=10)
             else:
                 if mentioned_channels:
                     for channel in mentioned_channels:
-                        sql.channels.delete_row(channel)
+                        await sql.channels.delete_row(channel)
                         await ctx.send("Removing entry <#{}>".format(channel))
                 else:
                     await ctx.send(help_str, delete_after=10)

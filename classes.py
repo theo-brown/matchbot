@@ -32,8 +32,8 @@ class Team:
     def get_players_ids(self):
         return [player.id for player in self.players]
     
-    def get_players_steam_ids(self):
-        return sql.users.get_steam64_ids(self.get_players_ids())
+    async def get_players_steam_ids(self):
+        return await sql.users.get_steam64_ids(self.get_players_ids())
     
 
 class Map:
