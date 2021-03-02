@@ -3,4 +3,4 @@ parsedatetime==2.6
 humanize==3.2.0
 steam==1.2.0
 aiosqlite==0.17.0
-discord==1.0.1
+

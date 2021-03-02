@@ -50,9 +50,9 @@ async def get_steam64_id(user_id):
 async def get_steam64_ids(user_ids):
     async with aiosqlite.connect(database_file) as db:
         parameters = ", ".join(['?']*len(user_ids))
-        with db.execute(f"""
+        async with db.execute(f"""
                         SELECT steam64_id FROM users
                         WHERE user_id IN ({parameters})
                         """, user_ids) as cursor:
-            steam64_ids = [i[0] for i in cursor]
+            steam64_ids = [i[0] async for i in cursor]
         return steam64_ids
