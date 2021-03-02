@@ -43,8 +43,11 @@ class Map:
         self.sides = {"t": None, "ct": None}
         self.pickedby = None
         
-    def pick(self, team):
+    def pick(self, team: Team):
         self.pickedby = team
     
-    def choose_side(self, team, side: str):
-         self.sides[side] = team
+    def choose_side(self, team: Team, side: str):
+        if side == "Counter-terrorists": side = "ct"
+        if side == "Terrorists": side = "t"
+        if side in ["t", "ct"]:
+            self.sides[side] = team
