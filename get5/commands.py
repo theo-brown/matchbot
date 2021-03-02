@@ -37,7 +37,7 @@ def get_config_from_file():
     return config
 
 def send_rcon_loadmatch():
-    rcon("get5_loadmatch_url 'http://theobrown.uk/match_config'")
+    rcon('get5_loadmatch_url "http://theobrown.uk/match_config"')
 
 def rcon(command='status', server_ip="194.147.121.4", server_port=27083, password="61g75"):
     with RCON((server_ip, server_port), password) as rcon_connection:
