@@ -1,7 +1,8 @@
 import json
 from classes import Team, Map
 from typing import Iterable
-
+import aiohttp
+from valve.rcon import RCON
 
 async def generate_config(team1: Team, team2: Team, maps: Iterable[Map]):
     config = {}
@@ -23,9 +24,23 @@ async def generate_config(team1: Team, team2: Team, maps: Iterable[Map]):
         config[f"team{i+1}"] = {}
         t = config[f"team{i+1}"]
         t["name"] = team.name
-        t["players"] = await team.get_players_steam_ids()
+        t["players"] = [str(i) for i in await team.get_players_steam_ids()]
     
-    # with open("get5/configs/match.cfg", 'w') as f:
-    #     json.dump(config, f)
+    with open("get5/configs/match_config.json", 'w') as f:
+        json.dump(config, f)
 
     return config
+
+def get_config_from_file():
+    with open("configs/match_config.json") as f:
+        config = json.load(f)
+    return config
+
+def send_rcon_loadmatch():
+    rcon('get5_loadmatch_url "http://theobrown.uk/match_config"')
+
+def rcon(command='status', server_ip="194.147.121.4", server_port=27083, password="61g75"):
+    with RCON((server_ip, server_port), password) as rcon_connection:
+        response = rcon_connection(command)
+    return response
+
