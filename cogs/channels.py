@@ -7,7 +7,9 @@ import sql.channels
 class ChannelCog(Cog, name='Channel management'):
     @Cog.listener()
     async def on_message(self, message: Message):
-        if await sql.channels.get_autodelete(message.channel.id) and not message.author.bot:
+        if (await sql.channels.get_autodelete(message.channel.id)
+            and not message.author.bot
+            and not message.author.permissions_in(message.channel).manage_messages):
             await message.delete(delay=10)
 
     @cmds.command()
