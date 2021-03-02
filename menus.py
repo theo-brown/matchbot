@@ -329,7 +329,6 @@ class VetoMenu(BasicMenu):
                 await self.setup_pick_sides()
         else:
             self.config = await get5.commands.generate_config(self.teams[0], self.teams[1], self.chosen_maps)
-            await self.message.channel.send(f"{self.config}")
 
         self.update_fields()
         self.update_footer()
