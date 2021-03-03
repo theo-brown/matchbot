@@ -4,7 +4,6 @@ import discord.ext.commands as cmds
 
 from . import Cog
 import parsing
-import sql.channels, sql.pickems
 
 
 class MatchCog(Cog, name='Match commands'):
@@ -30,7 +29,7 @@ class MatchCog(Cog, name='Match commands'):
                                f"({team} is {type(team)}")
                 return
 
-        send_channel = ctx.guild.get_channel(await sql.channels.get_redirect_channel(ctx.channel.id))
+        send_channel = ctx.guild.get_channel(await ctx.bot.db.channels.get_redirect_channel(ctx.channel.id))
         match_message = await send_channel.send(embed=embed)
         await match_message.add_reaction("1\N{COMBINING ENCLOSING KEYCAP}")
         await match_message.add_reaction("2\N{COMBINING ENCLOSING KEYCAP}")
@@ -54,7 +53,7 @@ class MatchCog(Cog, name='Match commands'):
             teams = [match_embed.fields[0].name, match_embed.fields[1].name]
             players = [match_embed.fields[0].value, match_embed.fields[1].value]
         else:
-            send_channel = ctx.guild.get_channel(await sql.channels.get_redirect_channel(ctx.channel.id))
+            send_channel = ctx.guild.get_channel(await ctx.bot.db.channels.get_redirect_channel(ctx.channel.id))
             send_result_message = send_channel.send
             mentions = parsing.get_all_mentions_in_order(ctx, args)
             if len(mentions) != 2:
@@ -136,10 +135,10 @@ class MatchCog(Cog, name='Match commands'):
 
             if bool(all_reactors):  # If there's somebody who reacted with one of the winner/loser emotes
                 correct_ids = [user.id for user in correct]
-                await sql.pickems.increment(match_message.channel.id, *correct_ids)
+                await ctx.bot.db.pickems.increment(match_message.channel.id, *correct_ids)
 
                 # Anyone who voted will be mentioned
-                await match_message.reply(await sql.pickems.get_message(match_message.channel.id),
+                await match_message.reply(await ctx.bot.db.pickems.get_message(match_message.channel.id),
                                           allowed_mentions=AllowedMentions(users=list(all_reactors)))
 
 def setup(bot):
