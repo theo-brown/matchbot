@@ -3,9 +3,12 @@ from typing import Union, Iterable
 from classes import Team, Map
 import get5.commands
 
-class BasicMenu:
-    def __init__(self, title="", pre_options="", options=[], 
-                 post_options="", fields={}, inline_fields=False, footer=""):
+
+class SelectMenu:
+    def __init__(self, bot, title="", pre_options="", options=[], post_options="",
+                 fields={}, inline_fields=False, footer=""):
+        self.bot = bot
+        self.finished = False
         self.title = title
         self.pre_options = pre_options
         self.options = options
@@ -41,7 +44,7 @@ class BasicMenu:
         self.fields = fields
         if inline_fields is not None:
             self.inline_fields = inline_fields
-        self.update_contents()            
+        self.update_contents()
 
     def set_footer(self, footer: str):
         self.footer = footer
@@ -61,17 +64,11 @@ class BasicMenu:
         return self.emoji_to_option[emoji]
     
     def get_all_emoji(self):
-        all_emoji = []
-        for option in self.options:
-            all_emoji.append(self.get_emoji(option))
-        return all_emoji
+        return [self.get_emoji(option) for option in self.options]
     
     def get_remaining_emoji(self):
-        remaining_emoji = []
-        for option in self.remaining_options:
-            remaining_emoji.append(self.get_emoji(option))
-        return remaining_emoji
-    
+        return [self.get_emoji(option) for option in self.remaining_options]
+
     def update_contents(self):
         options_str = ""
         for option in self.remaining_options:
@@ -87,7 +84,7 @@ class BasicMenu:
         self.embed.clear_fields()
         for name, value in self.fields.items():
             self.embed.add_field(name=name, value=value, inline=self.inline_fields)
-    
+
     async def add_all_reactions(self):
         for emoji in self.get_all_emoji():
             await self.message.add_reaction(emoji)
@@ -99,11 +96,19 @@ class BasicMenu:
     async def update_message(self):
         self.update_contents()
         await self.message.edit(embed=self.embed)
-        
-    async def send(self, ctx):
+        await self.add_remaining_reactions()
+
+    async def run(self, ctx):
         self.message = await ctx.send(embed=self.embed)
-        await self.add_all_reactions()
-        
+        await self.update_message()
+        self.finished = False
+        while not self.finished:
+            await self.process_reactions()
+
+    async def process_reactions(self):
+        reaction, user = await self.bot.wait_for('reaction_add', check=self.check_reaction)
+        await self.on_reaction(reaction, user)
+
     def check_reaction(self, reaction, user):
         return (reaction.message == self.message
                 and not user.bot
@@ -112,15 +117,20 @@ class BasicMenu:
     async def on_reaction(self, reaction, user):
         emoji = str(reaction.emoji)
         selected_option = self.get_option(emoji)
-        self.post_options += f"{user.mention} chose {self.selected_option}\n"
+        self.post_options += f"{user.mention} chose {selected_option}\n"
         self.remaining_options.remove(selected_option)
-        await self.message.clear_reaction(emoji)
+        if len(self.remaining_options) == 0:
+            self.finished = True
         await self.update_message()
+        await self.message.clear_reaction(emoji)
 
 
-class PickTeamsMenu(BasicMenu):
-    def __init__(self, captain1: Member, captain2: Member,
-                 players: Iterable[Member]):
+class PickTeamsMenu(SelectMenu):
+    def __init__(self, bot,
+             captain1: Member, captain2: Member,
+             players: Iterable[Member]):
+        self.bot = bot
+        self.finished = False
         self.captains = [captain1, captain2]
         self.teams = [Team(captain1), Team(captain2)]
         self.players = {player.mention: player for player in players}
@@ -143,27 +153,30 @@ class PickTeamsMenu(BasicMenu):
         self.generate_emoji()
         self.update_contents()
 
-    async def send(self, ctx):
-        self.message = await ctx.send(embed=self.embed)
-        await self.add_all_reactions()
-        self.set_footer(f"{self.active_captain.display_name} to pick")
-        await self.update_message()
-    
     def next_captain(self):
         for captain in self.captains:
             if captain != self.active_captain:
                 return captain
-    
+
     def update_fields(self):
         self.fields = {self.teams[0].name: self.teams[0].display(),
                        self.teams[1].name: self.teams[1].display()}
-    
+
     def update_footer(self):
         if self.remaining_options:
             self.footer = f"{self.active_captain.display_name} to pick"
         else:
             self.footer = ""
-    
+
+    async def run(self, ctx):
+        self.message = await ctx.send(embed=self.embed)
+        await self.add_all_reactions()
+        self.set_footer(f"{self.active_captain.display_name} to pick")
+        await self.update_message()
+        self.finished = False
+        while not self.finished:
+            await self.process_reactions()
+
     def check_reaction(self, reaction, user):
         return (reaction.message == self.message
                 and user == self.active_captain
@@ -172,26 +185,29 @@ class PickTeamsMenu(BasicMenu):
     async def on_reaction(self, reaction, user):
         emoji = str(reaction.emoji)
         selected_option = self.get_option(emoji)
-        self.remaining_options.remove(selected_option)
-        self.post_options += f"*{user.mention} picked {selected_option}*\n"
-        await self.message.clear_reaction(emoji)
         selected_user = self.players[selected_option]
         for team in self.teams:
             if team.captain == self.active_captain:
                 team.add_player(selected_user)
+        self.post_options += f"{user.mention} picked {selected_option}\n"
+        self.remaining_options.remove(selected_option)
         self.active_captain = self.next_captain()
         self.update_fields()
         self.update_footer()
+        if len(self.remaining_options) == 0:
+            self.finished = True
+        await self.message.clear_reaction(emoji)
         await self.update_message()
 
 
-class VetoMenu(BasicMenu):
-    def __init__(self, team1: Team, team2: Team, maps: Iterable[Map], bestof=3):
+class VetoMenu(SelectMenu):
+    def __init__(self, bot, team1: Team, team2: Team, maps: Iterable[Map], bestof=3):
+        self.bot = bot
         self.teams = [team1, team2]
         self.maps = maps
         self.active_team = self.teams[0]
         self.chosen_maps = []
-        
+
         bo1_veto = ['ban', 'ban', 'ban', 'ban', 'ban', 'ban']
         bo3_veto = ['ban', 'ban', 'pick', 'pick', 'ban', 'ban', 'sides', 'sides']
         
@@ -202,7 +218,7 @@ class VetoMenu(BasicMenu):
             self.veto = bo3_veto
             self.starting_sides = []
         
-        self.mode = self.next_mode()
+        self.mode = self.next_mode() # Get the first mode
         
         self.title = "**Map Veto**"
         self.pre_options = f"{self.teams[0].mention} vs {self.teams[1].mention}"
@@ -217,13 +233,18 @@ class VetoMenu(BasicMenu):
                 
         self.generate_emoji()
         self.update_contents()
-    
-    async def send(self, ctx):
+
+    async def run(self, ctx):
         self.message = await ctx.send(embed=self.embed)
-        await self.add_all_reactions()
         self.set_footer(f"{self.active_team.name} to {self.mode}")
         await self.update_message()
-        
+        self.finished = False
+        while not self.finished:
+            await self.process_reactions()
+        await self.message.clear_reactions()
+        self.set_footer(f"Type !startmatch to start the match")
+        await self.update_message()
+
     def next_team(self):
         for team in self.teams:
             if team != self.active_team:
@@ -253,7 +274,7 @@ class VetoMenu(BasicMenu):
                 self.footer = f"{self.active_team.name} to ban"
             elif self.mode == 'sides':
                 self.footer = (f"{self.active_team.name} to choose starting side "
-                               f"({self.get_other_teams_map_pick().readable_name})")
+                               f"({self.get_opponents_map_pick().readable_name})")
         else:
             self.footer = ""
     
@@ -262,19 +283,15 @@ class VetoMenu(BasicMenu):
             if m.readable_name == readable_name:
                 return m
 
-    def get_other_teams_map_pick(self):
-        for m in self.maps:
-            if m.pickedby != self.active_team and m.pickedby is not None:
-                return m
+    def get_inactive_team(self):
+        for t in self.teams:
+            if t != self.active_team:
+                return t
 
-    async def setup_pick_sides(self):
-        self.options = ["Counter-terrorists", "Terrorists"]
-        self.remaining_options = self.options[:]
-        self.generate_sides_emoji()
-        self.update_footer()
-        await self.message.clear_reactions()
-        await self.add_all_reactions()
-        await self.update_message()
+    def get_opponents_map_pick(self):
+        for m in self.maps:
+            if m.pickedby == self.get_inactive_team():
+                return m
 
     def generate_sides_emoji(self):
         self.emoji_to_option = {"\N{REGIONAL INDICATOR SYMBOL LETTER T}": "Terrorists",
@@ -290,39 +307,47 @@ class VetoMenu(BasicMenu):
 
     async def on_reaction(self, reaction, user):
         emoji = str(reaction.emoji)
-        await self.message.clear_reaction(emoji)
         selected_option = self.get_option(emoji)
-        self.remaining_options.remove(selected_option)
+        emoji_to_add, emoji_to_remove = [], []
 
         if self.mode == 'pick':
             self.post_options += f"*{self.active_team.name} picked {selected_option}*\n"
             selected_map = self.get_map_from_name(selected_option)
             selected_map.pick(self.active_team)
             self.chosen_maps.append(selected_map)
+            self.remaining_options.remove(selected_option)
+            await self.message.clear_reaction(emoji)
         elif self.mode == 'ban':
             self.post_options += f"*{self.active_team.name} banned {selected_option}*\n"
-        elif self.mode == 'sides':
-            other_teams_map = self.get_other_teams_map_pick()
-            other_teams_map.choose_side(self.active_team, selected_option)
-            self.post_options += f"*{self.active_team.name} chose to start as {selected_option} on {other_teams_map.readable_name}*\n"
-
-        if len(self.remaining_options) == 1:
-            final_option = self.remaining_options.pop()
-            await self.message.clear_reaction(self.get_emoji(final_option))
-            if not self.mode == 'sides':
-                finalmap = self.get_map_from_name(final_option)
-                self.chosen_maps.append(finalmap)
+            self.remaining_options.remove(selected_option)
+            await self.message.clear_reaction(emoji)
+            if len(self.remaining_options) == 1:
+                final_option = self.remaining_options.pop()
+                await self.message.clear_reaction(self.get_emoji(final_option))
+                self.chosen_maps.append(self.get_map_from_name(final_option))
                 self.post_options += f"*{final_option} was left over*\n"
                 self.active_team = self.next_team() # Need this so that the active team changes to the second team
+        elif self.mode == 'sides':
+            opponents_map_pick = self.get_opponents_map_pick()
+            opponents_map_pick.choose_side(self.active_team, selected_option)
+            self.post_options += (f"*{self.active_team.name} chose to start as "
+                                  f"{selected_option} on {opponents_map_pick.readable_name}*\n")
 
         self.active_team = self.next_team()
         if self.veto:
+            prev_mode = self.mode
             self.mode = self.next_mode()
-            if self.mode == 'sides':
-                await self.setup_pick_sides()
+            if self.mode == 'sides' and prev_mode != 'sides':
+                self.options = ["Counter-terrorists", "Terrorists"]
+                self.remaining_options = self.options[:]
+                self.generate_sides_emoji()
+                for emoji in emoji_to_remove:
+                    await self.message.clear_reaction(emoji)
         else:
             self.mode = ''
+            self.remaining_options = []
             self.config = await get5.commands.generate_config(self.teams[0], self.teams[1], self.chosen_maps)
+            self.finished = True
 
         self.update_fields()
         self.update_footer()

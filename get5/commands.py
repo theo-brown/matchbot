@@ -17,6 +17,10 @@ async def generate_config(team1: Team, team2: Team, maps: Iterable[Map]):
             config["map_sides"].append("team1_ct")
         elif m.sides["ct"] == team2:
             config["map_sides"].append("team2_ct")
+        elif m.sides["t"] == team1:
+            config["map_sides"].append("team1_t")
+        elif m.sides["t"] == team2:
+            config["map_sides"].append("team2_t")
         else:
             config["map_sides"].append("knife")
     # Team settings
