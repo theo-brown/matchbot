@@ -4,6 +4,4 @@ humanize==3.2.0
 steam==1.2.0
 python_valve==0.2.1
 aiosqlite==0.17.0
-discord==1.0.1
 python-dotenv==0.15.0
-valve==0.0.0
