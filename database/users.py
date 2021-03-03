@@ -35,7 +35,10 @@ async def get_steam64_id(user_id):
                 "   WHERE user_id =?",
                 (user_id,)
             ) as cursor:
-        return await cursor.fetchone() or 0
+        data = await cursor.fetchone()
+    if data is not None:
+        return data[0]
+    return None
 
 async def get_steam64_ids(user_ids):
     parameters = ", ".join(['?']*len(user_ids))
