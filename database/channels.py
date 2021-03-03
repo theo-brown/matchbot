@@ -14,13 +14,13 @@ async def create():
 async def clear():
     await db.execute("DELETE FROM channels")
 
-async def display(columns=''):
-    funcs = {
+async def display(column=''):
+    functions = {
         '': display_all,
         'autodelete': display_autodelete,
         'redirect': display_redirect,
     }
-    return await funcs[columns]()
+    return await functions[column]()
 
 async def display_all():
     s = "```\nchannel_id\t\t\tredirect_channel_id\tautodelete"
@@ -52,7 +52,9 @@ async def display_redirect():
     s += "\n```"
     return s
 
-async def add_row(channel_id, redirect_channel_id=0, autodelete=0):
+async def add_row(channel_id, redirect_channel_id=None, autodelete=0):
+    if redirect_channel_id is None:
+        redirect_channel_id = channel_id
     await db.execute(
         "INSERT OR REPLACE INTO channels(channel_id, redirect_channel_id, autodelete)"
         "VALUES(?, ?, ?)",
@@ -80,10 +82,16 @@ async def get_autodelete(channel_id):
     async with db.execute(
                 "SELECT autodelete FROM channels WHERE channel_id =?", (channel_id,)
             ) as cursor:
-        return bool(await cursor.fetchone())
+        data = await cursor.fetchone()
+    if data is not None:
+        return bool(data[0])
+    return False
 
 async def get_redirect_channel(channel_id):
     async with db.execute(
                 "SELECT redirect_channel_id FROM channels WHERE channel_id =?", (channel_id,)
             ) as cursor:
-        return await cursor.fetchone() or channel_id
+        data = await cursor.fetchone()
+    if data is not None:
+        return data[0]
+    return channel_id

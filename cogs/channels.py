@@ -9,6 +9,7 @@ class ChannelCog(Cog, name='Channel management'):
         if (await self.bot.db.channels.get_autodelete(message.channel.id)
             and not message.author.bot
             and not message.author.permissions_in(message.channel).manage_messages):
+            print(f"Deleting message {message.jump_url}")
             await message.delete(delay=10)
 
     @cmds.command()
@@ -27,7 +28,7 @@ class ChannelCog(Cog, name='Channel management'):
             elif mode_arg == "autodelete":
                 for channel in mentioned_channels:
                     await ctx.bot.db.channels.set_autodelete(channel, True)
-                    await ctx.send("Autodeleting bot triggers in <#{}>".format(channel))
+                    await ctx.send("Autodeleting messages in <#{}>".format(channel))
             else:
                 await ctx.send(help_str, delete_after=10)
         elif mode == "del":
@@ -39,7 +40,7 @@ class ChannelCog(Cog, name='Channel management'):
             elif mode_arg == "autodelete":
                 for channel in mentioned_channels:
                     await ctx.bot.db.channels.set_autodelete(channel, False)
-                    await ctx.send("Removed autodeleting bot triggers in <#{}>".format(channel),
+                    await ctx.send("Removed autodeleting messages in <#{}>".format(channel),
                                    delete_after=10)
             else:
                 if mentioned_channels:

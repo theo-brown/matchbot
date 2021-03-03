@@ -73,20 +73,20 @@ async def get_list(pickem_channel_id):
                 "   ORDER BY points DESC",
                 (pickem_channel_id,)
             ) as cursor:
-        lst = await cursor.fetchall()
+        data = await cursor.fetchall()
 
     ### Rank by points, assigning same rank to ties
     # ranks before ties
-    ranks = list(range(1, len(lst)+1))
-    for i in range(len(lst)-1):
+    ranks = list(range(1, len(data)+1))
+    for i in range(len(data)-1):
         # If the next users points are the same, they have the same rank
-        if lst[i+1][1] == lst[i][1]:
+        if data[i+1][1] == data[i][1]:
             ranks[i+1] = ranks[i]
 
-    return ((rank,usr,pts) for rank,(usr,pts) in zip(ranks,lst))
+    return ((rank, user, points) for rank, (user, points) in zip(ranks, data))
 
 async def get_message(pickem_channel_id):
     s = f"<#{pickem_channel_id}>\n**Pick'em Predictions Leaderboard**"
-    for rank,usr,pts in await get_list(pickem_channel_id):
-        s += f"\n{rank}. <@{usr}> ({pts}pts)"
+    for rank, user, points in await get_list(pickem_channel_id):
+        s += f"\n{rank}. <@{user}> ({points}pts)"
     return s
