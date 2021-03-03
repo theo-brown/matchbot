@@ -31,8 +31,8 @@ async def add_steam64_id(user_id, steam64_id):
 
 async def get_steam64_id(user_id):
     async with db.execute(
-                "SELECT steam64_id FROM users\n"
-                "   WHERE user_id =?\n",
+                "SELECT steam64_id FROM users"
+                "   WHERE user_id =?",
                 (user_id,)
             ) as cursor:
         return await cursor.fetchone() or 0
