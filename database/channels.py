@@ -26,8 +26,8 @@ async def display_all():
     s = "```\nchannel_id\t\t\tredirect_channel_id\tautodelete"
 
     async with db.execute("SELECT * FROM channels") as cursor:
-        async for ch,redir,auto in cursor:
-            s += f"\n{ch}\t{redir}\t{auto}"
+        async for channel, redirect, autodelete in cursor:
+            s += f"\n{channel}\t{redirect}\t{autodelete}"
 
     s += "\n```"
     return s
@@ -36,8 +36,8 @@ async def display_autodelete():
     s = "```channel_id\t\t\tautodelete"
 
     async with db.execute("SELECT channel_id, autodelete FROM channels") as cursor:
-        async for ch,auto in cursor:
-            s += f"\n{ch}\t{auto}"
+        async for channel, autodelete in cursor:
+            s += f"\n{channel}\t{autodelete}"
 
     s += "\n```"
     return s
@@ -46,8 +46,8 @@ async def display_redirect():
     s = "```channel_id\t\t\tredirect_channel_id"
 
     async with db.execute("SELECT channel_id, redirect_channel_id FROM channels") as cursor:
-        async for ch,redir in cursor:
-            s += f"\n{ch}\t{redir}"
+        async for channel, redirect in cursor:
+            s += f"\n{channel}\t{redirect}"
 
     s += "\n```"
     return s

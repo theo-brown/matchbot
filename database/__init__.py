@@ -1,8 +1,8 @@
 import aiosqlite
 
-database_file = 'database.db'
+database_file = 'database/database.db'
 
-class Database:
+class DatabaseExtension:
     from . import channels
     from . import pickems
     from . import users
@@ -19,4 +19,4 @@ class Database:
             await table.create()
 
 def setup(bot):
-    bot.db = Database(bot)
+    bot.db = DatabaseExtension(bot)

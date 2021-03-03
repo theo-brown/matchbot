@@ -20,8 +20,8 @@ async def display():
     s = "pickem_channel_id\tuser_id\tpoints"
 
     async with db.execute("SELECT * FROM pickem_points") as cursor:
-        async for ch,usr,pts in cursor:
-            s += f"\n<#{ch}>\t{usr}\t{pts}"
+        async for channel, user, points in cursor:
+            s += f"\n<#{channel}>\t{user}\t{points}"
 
     return s
 
@@ -30,7 +30,7 @@ async def add_row(pickem_channel_id, user_id, points):
         "INSERT INTO pickem_points(pickem_channel_id, user_id, points)"
         "   VALUES(?, ?, ?)"
         "   ON CONFLICT(pickem_channel_id, user_id)"
-        "       DO UPDATE SET points = points + excluded.point",
+        "       DO UPDATE SET points = points + excluded.points",
         (pickem_channel_id, user_id, points)
     )
     
