@@ -1,7 +1,7 @@
-bot_token*.txt
-bot_update.sh
 .idea
-get5/configs/*
+get5/configs
+.env
+venv
 
 ############################
 # Default Python .gitignore

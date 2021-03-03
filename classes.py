@@ -1,5 +1,5 @@
 from discord import Member, Role
-import sql.users 
+import database.users
 
 class Team:
     def __init__(self, team, captain=None, players=[]):
@@ -33,7 +33,7 @@ class Team:
         return [player.id for player in self.players]
     
     async def get_players_steam_ids(self):
-        return await sql.users.get_steam64_ids(self.get_players_ids())
+        return await database.users.get_steam64_ids(self.get_players_ids())
     
 
 class Map:
