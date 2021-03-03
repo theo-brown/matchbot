@@ -17,7 +17,7 @@ async def display():
     s = "user_id\t\t\tsteam64_id"
 
     async with db.execute("SELECT * FROM users") as cursor:
-        async for uid,steam in cursor:
+        async for uid, steam in cursor:
             s += f"\n{uid}\t{steam}"
 
     return s
