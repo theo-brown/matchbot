@@ -67,8 +67,10 @@ class LobbyCog(Cog, name='Pick/ban commands'):
         password = getenv('CSGO_SERVER_PASSWORD')
         rcon_password = getenv('CSGO_SERVER_RCON_PASSWORD')
 
+        get5.commands.rcon("get5_endmatch", ip, port, rcon_password) # End any existing match
+        get5.commands.send_rcon_loadmatch(ip, port, rcon_password) # Send rcon command to trigger new match setup
+
         connect_str = f"`connect {ip}:{port}; password {password}`"
-        get5.commands.send_rcon_loadmatch(ip, port, rcon_password)
         await ctx.send(connect_str)
 
 def setup(bot):
