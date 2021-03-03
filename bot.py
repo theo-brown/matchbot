@@ -3,6 +3,10 @@ from discord.ext import commands
 from steam import steamid
 import sql.users, sql.channels, sql.pickems
 import logging
+from dotenv import load_dotenv
+from os import getenv
+
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)  # show all logs above INFO level
 
@@ -28,8 +32,5 @@ async def steam(ctx, profile_url: str, user=None):
     await sql.users.add_steam64_id(user.id, steam64_id)
     await ctx.send(f"Linked {user.mention} to <{profile_url}>")
 
-with open('bot_token.txt') as f:
-    bot_token = f.read().strip()
-
 if __name__ == '__main__':
-    bot.run(bot_token)
+    bot.run(getenv('BOT_TOKEN'))
