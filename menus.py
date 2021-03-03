@@ -193,7 +193,7 @@ class VetoMenu(BasicMenu):
         self.chosen_maps = []
         
         bo1_veto = ['ban', 'ban', 'ban', 'ban', 'ban', 'ban']
-        bo3_veto = ['ban', 'ban', 'pick', 'side', 'pick', 'side', 'ban', 'ban']
+        bo3_veto = ['ban', 'ban', 'pick', 'pick', 'ban', 'ban', 'sides', 'sides']
         
         if bestof == 1:
             self.veto = bo1_veto
@@ -251,8 +251,9 @@ class VetoMenu(BasicMenu):
                 self.footer = f"{self.active_team.name} to pick"
             elif self.mode == 'ban':
                 self.footer = f"{self.active_team.name} to ban"
-            elif self.mode == 'side':
-                self.footer = f"{self.active_team.name} to choose starting side"
+            elif self.mode == 'sides':
+                self.footer = (f"{self.active_team.name} to choose starting side "
+                               f"({self.get_other_teams_map_pick().readable_name})")
         else:
             self.footer = ""
     
@@ -261,27 +262,19 @@ class VetoMenu(BasicMenu):
             if m.readable_name == readable_name:
                 return m
 
+    def get_other_teams_map_pick(self):
+        for m in self.maps:
+            if m.pickedby != self.active_team and m.pickedby is not None:
+                return m
+
     async def setup_pick_sides(self):
-        # Save the map state
-        self.map_options = self.options[:]
-        self.map_remaining_options = self.remaining_options[:]
-        # Switch to pick sides state
         self.options = ["Counter-terrorists", "Terrorists"]
         self.remaining_options = self.options[:]
         self.generate_sides_emoji()
         self.update_footer()
-        await self.update_message()
         await self.message.clear_reactions()
         await self.add_all_reactions()
-
-    async def setup_pick_maps(self):
-        await self.message.clear_reactions()
-        self.options = self.map_options
-        self.remaining_options = self.map_remaining_options
-        self.generate_emoji()
-        self.update_footer()
         await self.update_message()
-        await self.add_remaining_reactions()
 
     def generate_sides_emoji(self):
         self.emoji_to_option = {"\N{REGIONAL INDICATOR SYMBOL LETTER T}": "Terrorists",
@@ -308,26 +301,27 @@ class VetoMenu(BasicMenu):
             self.chosen_maps.append(selected_map)
         elif self.mode == 'ban':
             self.post_options += f"*{self.active_team.name} banned {selected_option}*\n"
-        elif self.mode == 'side':
-            self.chosen_maps[-1].choose_side(self.active_team, selected_option)
-            self.post_options += f"*{self.active_team.name} chose to start as {selected_option}*\n"
-            # Go back to choose maps state
-            await self.setup_pick_maps()
+        elif self.mode == 'sides':
+            other_teams_map = self.get_other_teams_map_pick()
+            other_teams_map.choose_side(self.active_team, selected_option)
+            self.post_options += f"*{self.active_team.name} chose to start as {selected_option} on {other_teams_map.readable_name}*\n"
 
         if len(self.remaining_options) == 1:
             final_option = self.remaining_options.pop()
             await self.message.clear_reaction(self.get_emoji(final_option))
-            finalmap = self.get_map_from_name(final_option)
-            self.chosen_maps.append(finalmap)
-            self.post_options += f"*{final_option} was left over*\n"
+            if not self.mode == 'sides':
+                finalmap = self.get_map_from_name(final_option)
+                self.chosen_maps.append(finalmap)
+                self.post_options += f"*{final_option} was left over*\n"
+                self.active_team = self.next_team() # Need this so that the active team changes to the second team
 
-        if not self.mode == 'side':
-            self.active_team = self.next_team()
+        self.active_team = self.next_team()
         if self.veto:
             self.mode = self.next_mode()
-            if self.mode == 'side':
+            if self.mode == 'sides':
                 await self.setup_pick_sides()
         else:
+            self.mode = ''
             self.config = await get5.commands.generate_config(self.teams[0], self.teams[1], self.chosen_maps)
 
         self.update_fields()
