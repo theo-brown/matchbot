@@ -1,7 +1,7 @@
-bot_token.txt
-*.db
+bot_token*.txt
+bot_update.sh
 .idea
-get5/configs/match.cfg
+get5/configs/*
 
 ############################
 # Default Python .gitignore
