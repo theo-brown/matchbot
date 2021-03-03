@@ -8,38 +8,42 @@ from classes import Map, Team
 import menus
 import parsing
 
+wingman_map_pool = [Map('Cobblestone', 'de_cbble'),
+                    Map('Inferno', 'de_inferno'),
+                    Map('Nuke', 'de_nuke'),
+                    Map('Overpass', 'de_overpass'),
+                    Map('Shortdust', 'de_shortdust'),
+                    Map('Train', 'de_train'),
+                    Map('Vertigo', 'de_vertigo')]
 
-class LobbyCog(Cog, name='Pick/ban commands'):
-    @cmds.command()
-    async def veto(self, ctx: cmds.Context, team1: Union[Role, Member, Team], team2: Union[Role, Member, Team], mode=''):
-        """Start a veto between two teams."""
-        if mode == 'wingman':
-            map_pool = [Map('Cobblestone', 'de_cbble'),
-                        Map('Inferno', 'de_inferno'),
-                        Map('Nuke', 'de_nuke'),
-                        Map('Overpass', 'de_overpass'),
-                        Map('Shortdust', 'de_shortdust'),
-                        Map('Train', 'de_train'),
-                        Map('Vertigo', 'de_vertigo')]
-        else:
-            map_pool = [Map('Dust 2', 'de_dust2'),
+active_duty_map_pool = [Map('Dust 2', 'de_dust2'),
                         Map('Inferno', 'de_inferno'),
                         Map('Mirage', 'de_mirage'),
                         Map('Nuke', 'de_nuke'),
                         Map('Overpass', 'de_overpass'),
                         Map('Train', 'de_train'),
                         Map('Vertigo', 'de_vertigo')]
+
+class LobbyCog(Cog, name='Pick/ban commands'):
+    @cmds.command()
+    async def veto(self, ctx: cmds.Context, team1: Union[Role, Member, Team], team2: Union[Role, Member, Team], mode=''):
+        """Start a veto between two teams."""
+        if mode == 'wingman':
+            map_pool = wingman_map_pool
+        else:
+            map_pool = active_duty_map_pool
         teams = []
         for i, team in enumerate([team1, team2]):
             if not isinstance(team, Team):
                 teams.append(Team(team))
             else:
                 teams.append(team)
-        embed = menus.VetoMenu(teams[0], teams[1], map_pool)
-        await embed.send(ctx)
-        while embed.remaining_options:
-            reaction, user = await self.bot.wait_for('reaction_add', check=embed.check_reaction)
-            await embed.on_reaction(reaction, user)
+        if mode == 'bo1':
+            bestof = 1
+        else:
+            bestof = 3
+        veto_menu = menus.VetoMenu(self.bot, teams[0], teams[1], map_pool, bestof=bestof)
+        await veto_menu.run(ctx)
 
     @cmds.command()
     async def teams(self, ctx, captain1: Member, captain2: Member, *players):
@@ -53,11 +57,8 @@ class LobbyCog(Cog, name='Pick/ban commands'):
                 user = self.bot.get_user(userid)
                 players_users.append(user)
 
-        embed = menus.PickTeamsMenu(captain1, captain2, players_users)
-        await embed.send(ctx)
-        while embed.remaining_options:
-            reaction, user = await self.bot.wait_for('reaction_add', check=embed.check_reaction)
-            await embed.on_reaction(reaction, user)
+        teams_menu = menus.PickTeamsMenu(self.bot, captain1, captain2, players_users)
+        await teams_menu.run(ctx)
 
     @cmds.command()
     async def startmatch(self, ctx):
