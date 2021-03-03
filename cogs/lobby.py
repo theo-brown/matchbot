@@ -2,7 +2,7 @@ from typing import Union
 from discord import Role, Member
 import get5.commands
 import discord.ext.commands as cmds
-
+from os import getenv
 from . import Cog
 from classes import Map, Team
 import menus
@@ -61,8 +61,10 @@ class LobbyCog(Cog, name='Pick/ban commands'):
 
     @cmds.command()
     async def startmatch(self, ctx):
-        await get5.commands.send_rcon_loadmatch()
-        await ctx.send("`connect 194.147.121.4:27083; password 12345678`")
+        get5.commands.send_rcon_loadmatch()
+        await ctx.send("`connect {}:{}; password {}`".format(getenv('CSGO_SERVER_IP'),
+                                                             getenv('CSGO_SERVER_PORT'),
+                                                             getenv('CSGO_SERVER_PASSWORD')))
 
 def setup(bot):
     bot.add_cog(LobbyCog(bot))
