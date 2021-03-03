@@ -40,12 +40,11 @@ def get_config_from_file():
         config = json.load(f)
     return config
 
-def send_rcon_loadmatch():
-    rcon(f"get5_loadmatch_url '{getenv('MATCH_CONFIG_URL')}'")
+def send_rcon_loadmatch(server_ip, server_port, rcon_password):
+    rcon(f"get5_loadmatch_url \"{getenv('MATCH_CONFIG_URL')}\"", server_ip, server_port, rcon_password)
 
-def rcon(command='status', server_ip=getenv('CSGO_SERVER_IP'),
-         server_port=getenv('CSGO_SERVER_PORT'), password=getenv('CSGO_SERVER_RCON_PASSWORD')):
-    with RCON((server_ip, int(server_port)), password) as rcon_connection:
+def rcon(command, server_ip, server_port, rcon_password):
+    with RCON((server_ip, int(server_port)), rcon_password) as rcon_connection:
         response = rcon_connection(command)
     return response
 
