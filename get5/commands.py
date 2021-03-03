@@ -1,8 +1,8 @@
 import json
 from classes import Team, Map
 from typing import Iterable
-import aiohttp
 from valve.rcon import RCON
+from os import getenv
 
 async def generate_config(team1: Team, team2: Team, maps: Iterable[Map]):
     config = {}
@@ -37,10 +37,11 @@ def get_config_from_file():
     return config
 
 def send_rcon_loadmatch():
-    rcon('get5_loadmatch_url "http://theobrown.uk/match_config"')
+    rcon(f"get5_loadmatch_url '{getenv('MATCH_CONFIG_URL')}'")
 
-def rcon(command='status', server_ip="194.147.121.4", server_port=27083, password="61g75"):
-    with RCON((server_ip, server_port), password) as rcon_connection:
+def rcon(command='status', server_ip=getenv('CSGO_SERVER_IP'),
+         server_port=getenv('CSGO_SERVER_PORT'), password=getenv('CSGO_SERVER_RCON_PASSWORD')):
+    with RCON((server_ip, int(server_port)), password) as rcon_connection:
         response = rcon_connection(command)
     return response
 
