@@ -1,7 +1,6 @@
 .idea
-get5/configs
-.env
-venv
+get5/configs/
+*.log
 
 ############################
 # Default Python .gitignore
