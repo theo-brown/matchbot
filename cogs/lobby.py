@@ -62,10 +62,14 @@ class LobbyCog(Cog, name='Pick/ban commands'):
 
     @cmds.command()
     async def startmatch(self, ctx):
-        get5.commands.send_rcon_loadmatch()
-        await ctx.send("`connect {}:{}; password {}`".format(getenv('CSGO_SERVER_IP'),
-                                                             getenv('CSGO_SERVER_PORT'),
-                                                             getenv('CSGO_SERVER_PASSWORD')))
+        ip = getenv('CSGO_SERVER_IP')
+        port = getenv('CSGO_SERVER_PORT')
+        password = getenv('CSGO_SERVER_PASSWORD')
+        rcon_password = getenv('CSGO_SERVER_RCON_PASSWORD')
+
+        connect_str = f"`connect {ip}:{port}; password {password}`"
+        get5.commands.send_rcon_loadmatch(ip, port, rcon_password)
+        await ctx.send(connect_str)
 
 def setup(bot):
     bot.add_cog(LobbyCog(bot))
