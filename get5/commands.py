@@ -4,7 +4,7 @@ from typing import Iterable
 from valve.rcon import RCON
 from os import getenv
 
-async def generate_config(team1: Team, team2: Team, maps: Iterable[Map]):
+async def generate_config(team1: Team, team2: Team, maps: Iterable[Map], gametype='5v5_bo1'):
     config = {}
     # Match settings
     config["matchid"] = f"{team1.name} vs {team2.name}"
@@ -13,6 +13,14 @@ async def generate_config(team1: Team, team2: Team, maps: Iterable[Map]):
     config["skip_veto"] = True
     config["cvars"] = {}
     config["cvars"]["get5_check_auths"] = 1
+    if '2v2' in gametype:
+        config["cvars"]["get5_warmup_cfg"] = "get5/warmup_2v2.cfg"
+        config["cvars"]["get5_knife_cfg"] = "get5/knife_2v2.cfg"
+        config["cvars"]["get5_live_cfg"] = "get5/live_2v2.cfg"
+    else:
+        config["cvars"]["get5_warmup_cfg"] = "get5/warmup_5v5.cfg"
+        config["cvars"]["get5_knife_cfg"] = "get5/knife_5v5.cfg"
+        config["cvars"]["get5_live_cfg"] = "get5/live_5v5.cfg"
     config["map_sides"] = []
     for m in maps:
         if m.sides["ct"] == team1:
