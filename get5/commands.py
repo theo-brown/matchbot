@@ -11,6 +11,8 @@ async def generate_config(team1: Team, team2: Team, maps: Iterable[Map]):
     config["num_maps"] = len(maps)
     config["maplist"] = [m.ingame_name for m in maps]
     config["skip_veto"] = True
+    config["cvars"] = {}
+    config["cvars"]["get5_check_auths"] = 1
     config["map_sides"] = []
     for m in maps:
         if m.sides["ct"] == team1:
