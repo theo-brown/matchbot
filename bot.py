@@ -36,16 +36,19 @@ async def steam(ctx, *args):
     """Link your Steam and Discord accounts for server configuration."""
     args = list(args)
     mentions = ctx.message.mentions
-    print(args, mentions)
     if len(mentions):
         user = mentions[0]
         args.remove(user.mention)
     else:
         user = ctx.author
-    profile_url = args[-1]
-    steam64_id = steamid.steam64_from_url(profile_url)
-    await ctx.bot.db.users.add_steam64_id(user.id, steam64_id)
-    await ctx.send(f"Linked {user.mention} to <{profile_url}>")
+    if len(args) == 1:
+        profile_url = args[0]
+        steam64_id = steamid.steam64_from_url(profile_url)
+        await ctx.bot.db.users.add_steam64_id(user.id, steam64_id)
+        await ctx.send(f"Linked {user.mention} to <{profile_url}>")
+    else:
+        steam64_id = await ctx.bot.db.users.get_steam64_id(user.id)
+        await ctx.send(f"{user.mention}'s steam64_id is {steam64_id}")
 
 if __name__ == '__main__':
     bot.run(getenv('BOT_TOKEN'))
