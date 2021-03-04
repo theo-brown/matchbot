@@ -15,7 +15,7 @@ class Team:
             self.captain = team
             self.players = set(players + [self.captain])
             self.name = f"team_{self.captain.name}"
-            self.mention = f"Team {self.captain.mention}"
+            self.mention = self.name
         else:
             raise ValueError(f"Expected a Role and/or a Member "
                              f"(got {type(team)} and {type(captain)})")
