@@ -202,20 +202,21 @@ class PickTeamsMenu(SelectMenu):
 
 
 class VetoMenu(SelectMenu):
-    def __init__(self, bot, team1: Team, team2: Team, maps: Iterable[Map], bestof=3):
+    def __init__(self, bot, team1: Team, team2: Team, maps: Iterable[Map], gametype):
         self.bot = bot
         self.teams = [team1, team2]
         self.maps = maps
+        self.gametype = gametype
         self.active_team = self.teams[0]
         self.chosen_maps = []
 
         bo1_veto = ['ban', 'ban', 'ban', 'ban', 'ban', 'ban']
         bo3_veto = ['ban', 'ban', 'pick', 'pick', 'ban', 'ban', 'sides', 'sides']
         
-        if bestof == 1:
+        if 'bo1' in self.gametype:
             self.veto = bo1_veto
             self.starting_sides = ['knife']
-        elif bestof == 3:
+        elif 'bo3' in self.gametype:
             self.veto = bo3_veto
             self.starting_sides = []
         
@@ -347,7 +348,7 @@ class VetoMenu(SelectMenu):
         else:
             self.mode = ''
             self.remaining_options = []
-            self.config = await get5.commands.generate_config(self.teams[0], self.teams[1], self.chosen_maps)
+            self.config = await get5.commands.generate_config(self.teams[0], self.teams[1], self.chosen_maps, self.gametype)
             self.finished = True
 
         self.update_fields()
