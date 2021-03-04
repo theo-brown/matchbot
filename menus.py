@@ -242,8 +242,8 @@ class VetoMenu(SelectMenu):
         while not self.finished:
             await self.process_reactions()
         await self.message.clear_reactions()
-        self.set_footer(f"Type !startmatch to start the match")
-        await self.update_message()
+        # self.set_footer(f"Type !startmatch to start the match")
+        # await self.update_message()
 
     def next_team(self):
         for team in self.teams:
