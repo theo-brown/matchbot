@@ -10,12 +10,12 @@ class Team:
             if isinstance(captain, Member) and captain in self.players:
                 self.captain = captain
             else:
-                self.captain = team.members[0]
+                self.captain = None
         elif isinstance(team, Member):
             self.captain = team
             self.players = set(players + [self.captain])
             self.name = f"team_{self.captain.name}"
-            self.mention = self.name
+            self.mention = f"Team {self.captain.mention}"
         else:
             raise ValueError(f"Expected a Role and/or a Member "
                              f"(got {type(team)} and {type(captain)})")

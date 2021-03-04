@@ -136,10 +136,10 @@ class PickTeamsMenu(SelectMenu):
         self.players = {player.mention: player for player in players}
         self.active_captain = captain1
         
-        self.title = "**Pick Teams**"
+        self.title = "Pick Teams"
         self.pre_options = ("**Captains:** \n"
                             f"{self.captains[0].mention}\n"
-                            f"{self.captains[1].mention}")
+                            f"{self.captains[1].mention}\n")
         self.options = list(self.players.keys())                
         self.remaining_options = self.options[:]
         self.post_options = ""
@@ -162,16 +162,17 @@ class PickTeamsMenu(SelectMenu):
         self.fields = {self.teams[0].name: self.teams[0].display(),
                        self.teams[1].name: self.teams[1].display()}
 
-    def update_footer(self):
+    def update_preoptions(self):
+        self.pre_options = ("**Captains:** \n"
+                            f"{self.captains[0].mention}\n"
+                            f"{self.captains[1].mention}\n")
         if self.remaining_options:
-            self.footer = f"{self.active_captain.display_name} to pick"
-        else:
-            self.footer = ""
+            self.pre_options += f"\n{self.active_captain.mention} **to pick**"
 
     async def run(self, ctx):
         self.message = await ctx.send(embed=self.embed)
         await self.add_all_reactions()
-        self.set_footer(f"{self.active_captain.display_name} to pick")
+        self.update_preoptions()
         await self.update_message()
         self.finished = False
         while not self.finished:
@@ -193,7 +194,7 @@ class PickTeamsMenu(SelectMenu):
         self.remaining_options.remove(selected_option)
         self.active_captain = self.next_captain()
         self.update_fields()
-        self.update_footer()
+        self.update_preoptions()
         if len(self.remaining_options) == 0:
             self.finished = True
         await self.message.clear_reaction(emoji)
@@ -219,8 +220,8 @@ class VetoMenu(SelectMenu):
             self.starting_sides = []
         
         self.mode = self.next_mode() # Get the first mode
-        
-        self.title = "**Map Veto**"
+
+        self.title = "Map Veto"
         self.pre_options = f"{self.teams[0].mention} vs {self.teams[1].mention}"
         self.options = [m.readable_name for m in self.maps]
         self.remaining_options = self.options[:]
@@ -236,14 +237,12 @@ class VetoMenu(SelectMenu):
 
     async def run(self, ctx):
         self.message = await ctx.send(embed=self.embed)
-        self.set_footer(f"{self.active_team.name} to {self.mode}")
+        self.update_preoptions()
         await self.update_message()
         self.finished = False
         while not self.finished:
             await self.process_reactions()
         await self.message.clear_reactions()
-        # self.set_footer(f"Type !startmatch to start the match")
-        # await self.update_message()
 
     def next_team(self):
         for team in self.teams:
@@ -265,19 +264,17 @@ class VetoMenu(SelectMenu):
                 self.fields[name] = value
             else:
                 self.fields[f"Map {i+1}: {chosen_map.readable_name}"] = "Knife for sides"
-    
-    def update_footer(self):
+
+    def update_preoptions(self):
+        self.pre_options = f"{self.teams[0].mention} vs {self.teams[1].mention}"
         if self.remaining_options:
             if self.mode == 'pick':
-                self.footer = f"{self.active_team.name} to pick"
+                self.pre_options += f"\n\n{self.active_team.mention} **to pick**"
             elif self.mode == 'ban':
-                self.footer = f"{self.active_team.name} to ban"
+                self.pre_options += f"\n\n{self.active_team.mention} **to ban**"
             elif self.mode == 'sides':
-                self.footer = (f"{self.active_team.name} to choose starting side "
-                               f"({self.get_opponents_map_pick().readable_name})")
-        else:
-            self.footer = ""
-    
+                self.pre_options += f"\n\n{self.active_team.mention} **to choose starting side ({self.get_opponents_map_pick().readable_name})**"
+
     def get_map_from_name(self, readable_name):
         for m in self.maps:
             if m.readable_name == readable_name:
@@ -301,8 +298,12 @@ class VetoMenu(SelectMenu):
         self.emoji = list(self.emoji_to_option.keys())
 
     def check_reaction(self, reaction, user):
+        if self.active_team.captain is not None:
+            allowed_users = [self.active_team.captain]
+        else:
+            allowed_users = self.active_team.players
         return (reaction.message == self.message
-                and user in self.active_team.players
+                and user in allowed_users
                 and str(reaction.emoji) in self.get_remaining_emoji())
 
     async def on_reaction(self, reaction, user):
@@ -350,5 +351,5 @@ class VetoMenu(SelectMenu):
             self.finished = True
 
         self.update_fields()
-        self.update_footer()
+        self.update_preoptions()
         await self.update_message()
