@@ -1,5 +1,5 @@
 from typing import Union
-from discord import Role, Member
+from discord import Role, Member, Embed
 import get5.commands
 import discord.ext.commands as cmds
 from os import getenv
@@ -68,8 +68,9 @@ class LobbyCog(Cog, name='Pick/ban commands'):
         get5.commands.rcon("get5_endmatch", ip, port, rcon_password) # End any existing match
         get5.commands.send_rcon_loadmatch(ip, port, rcon_password) # Send rcon command to trigger new match setup
 
-        connect_str = f"```connect {ip}:{port}; password {password}```"
-        await ctx.send(f"Match set up on server: \n{connect_str}")
+        startmatch_embed = Embed(title="Server ready",
+                                 description=f"```connect {ip}:{port}; password {password}```")
+        await ctx.send(embed=startmatch_embed)
 
 def setup(bot):
     bot.add_cog(LobbyCog(bot))
