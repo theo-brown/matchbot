@@ -26,19 +26,22 @@ active_duty_map_pool = [Map('Dust 2', 'de_dust2'),
 
 class LobbyCog(Cog, name='Pick/ban commands'):
     @cmds.command()
-    async def veto(self, ctx: cmds.Context, team1: Union[Role, Member, Team], team2: Union[Role, Member, Team], mode=''):
+    async def veto(self, ctx: cmds.Context, team1: Union[Role, Member, Team], team2: Union[Role, Member, Team], mode='2v2_bo3'):
         """Start a veto between two teams."""
-        map_pool = wingman_map_pool
+        if mode.startswith('5v5'):
+            map_pool = active_duty_map_pool
+        elif mode.startswith('2v2'):
+            map_pool = wingman_map_pool
         teams = []
         for i, team in enumerate([team1, team2]):
             if not isinstance(team, Team):
                 teams.append(Team(team))
             else:
                 teams.append(team)
-        if mode == 'bo1':
-            bestof = 1
-        else:
+        if mode.endswith('bo3'):
             bestof = 3
+        else:
+            bestof = 1
         veto_menu = menus.VetoMenu(self.bot, teams[0], teams[1], map_pool, bestof=bestof)
         await veto_menu.run(ctx)
         await self.startmatch(ctx)
@@ -57,6 +60,7 @@ class LobbyCog(Cog, name='Pick/ban commands'):
 
         teams_menu = menus.PickTeamsMenu(self.bot, captain1, captain2, players_users)
         await teams_menu.run(ctx)
+        await self.veto(ctx, teams_menu.teams[0], teams_menu.teams[1], mode='5v5_bo1')
 
     @cmds.command()
     async def startmatch(self, ctx):
@@ -69,7 +73,7 @@ class LobbyCog(Cog, name='Pick/ban commands'):
         get5.commands.send_rcon_loadmatch(ip, port, rcon_password) # Send rcon command to trigger new match setup
 
         connect_str = f"```connect {ip}:{port}; password {password}```"
-        await ctx.send(connect_str)
+        await ctx.send(f"Match set up on server: \n{connect_str}")
 
 def setup(bot):
     bot.add_cog(LobbyCog(bot))
