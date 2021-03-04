@@ -68,7 +68,7 @@ class LobbyCog(Cog, name='Pick/ban commands'):
         get5.commands.rcon("get5_endmatch", ip, port, rcon_password) # End any existing match
         get5.commands.send_rcon_loadmatch(ip, port, rcon_password) # Send rcon command to trigger new match setup
 
-        connect_str = f"`connect {ip}:{port}; password {password}`"
+        connect_str = f"```connect {ip}:{port}; password {password}```"
         await ctx.send(connect_str)
 
 def setup(bot):
