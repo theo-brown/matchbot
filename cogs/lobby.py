@@ -59,14 +59,14 @@ class LobbyCog(Cog, name='Pick/ban commands'):
         await self.veto(ctx, teams_menu.teams[0], teams_menu.teams[1], mode='5v5_bo1')
 
     @cmds.command()
-    async def startmatch(self, ctx):
+    async def startmatch2(self, ctx):
         ip = getenv('CSGO_SERVER_IP')
         port = getenv('CSGO_SERVER_PORT')
         password = getenv('CSGO_SERVER_PASSWORD')
         rcon_password = getenv('CSGO_SERVER_RCON_PASSWORD')
 
-        get5.commands.rcon("get5_endmatch", ip, port, rcon_password) # End any existing match
-        get5.commands.send_rcon_loadmatch(ip, port, rcon_password) # Send rcon command to trigger new match setup
+        await get5.commands.rcon("get5_endmatch", ip, port, rcon_password) # End any existing match
+        await get5.commands.send_rcon_loadmatch(ip, port, rcon_password) # Send rcon command to trigger new match setup
 
         startmatch_embed = Embed(title="Server ready",
                                  description=f"```connect {ip}:{port}; password {password}```")
