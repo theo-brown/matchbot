@@ -66,7 +66,7 @@ class LobbyCog(Cog, name='Pick/ban commands'):
         rcon_password = getenv('CSGO_SERVER_RCON_PASSWORD')
 
         # Send rcon command to end existing match and trigger new match setup
-        get5.commands.force_loadmatch(ip, port, rcon_password)
+        await get5.commands.force_loadmatch(ip, port, rcon_password)
 
         startmatch_embed = Embed(title="Server ready",
                                  description=f"```connect {ip}:{port}; password {password}```")
