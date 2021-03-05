@@ -58,7 +58,7 @@ async def endmatch(ip, port, rcon_password):
 async def force_loadmatch(ip, port, rcon_password):
     await rcon(ip, port, rcon_password, f"get5_endmatch; get5_loadmatch_url \"{getenv('MATCH_CONFIG_URL')}\"")
 
-async def rcon(command, ip, port, rcon_password):
+async def rcon(ip, port, rcon_password, command):
     rconsole = await aiorcon.RCON.create(ip, int(port), rcon_password, loop=asyncio.get_event_loop())
     response = await rconsole(command)
     rconsole.close()
