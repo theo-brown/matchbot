@@ -1,7 +1,7 @@
 import json
 from classes import Team, Map
 from typing import Iterable
-from valve.rcon import RCON
+from valve.rcon import execute as rcon_execute
 from os import getenv
 
 async def generate_config(team1: Team, team2: Team, maps: Iterable[Map], gametype='5v5_bo1'):
@@ -15,11 +15,9 @@ async def generate_config(team1: Team, team2: Team, maps: Iterable[Map], gametyp
     config["cvars"]["get5_check_auths"] = 1
     if '2v2' in gametype:
         config["cvars"]["get5_warmup_cfg"] = "get5/warmup_2v2.cfg"
-        config["cvars"]["get5_knife_cfg"] = "get5/knife_2v2.cfg"
         config["cvars"]["get5_live_cfg"] = "get5/live_2v2.cfg"
     else:
         config["cvars"]["get5_warmup_cfg"] = "get5/warmup_5v5.cfg"
-        config["cvars"]["get5_knife_cfg"] = "get5/knife_5v5.cfg"
         config["cvars"]["get5_live_cfg"] = "get5/live_5v5.cfg"
     config["map_sides"] = []
     for m in maps:
@@ -50,11 +48,16 @@ def get_config_from_file():
         config = json.load(f)
     return config
 
-def send_rcon_loadmatch(server_ip, server_port, rcon_password):
-    rcon(f"get5_loadmatch_url \"{getenv('MATCH_CONFIG_URL')}\"", server_ip, server_port, rcon_password)
+def force_loadmatch(server_ip, server_port, rcon_password):
+    endmatch(server_ip, server_port, rcon_password)
+    loadmatch(server_ip, server_port, rcon_password)
 
-def rcon(command, server_ip, server_port, rcon_password):
-    with RCON((server_ip, int(server_port)), rcon_password) as rcon_connection:
-        response = rcon_connection(command)
-    return response
+def loadmatch(server_ip, server_port, rcon_password):
+    rcon_execute((server_ip, server_port), rcon_password, f"get5_loadmatch_url \"{getenv('MATCH_CONFIG_URL')}\"")
 
+def endmatch(server_ip, server_port, rcon_password):
+    rcon_execute((server_ip, server_port), rcon_password, f"get5_endmatch")
+
+if __name__ == '__main__':
+    from dotenv import load_dotenv
+    load_dotenv('../.env')
