@@ -1,8 +1,19 @@
-source /home/tab53/3.8_env/bin/activate
 cd /home/tab53/programs/matchbot
+source venv/bin/activate
 git checkout main
+echo "Saving copy of database...."
+cp database/database.db database/database_backup.db
+echo "Resetting to last commit..."
+git reset --hard origin/main
+echo "Pulling from origin..."
 git pull
-pipreqs . --force
+echo "Restoring database..."
+mv database/database_backup.db database/database.db
+echo "Installing requirements..."
 pip install -r requirements.txt
+echo "Stopping matchbot.service..."
+systemctl --user stop -f matchbot.service
+echo "Reloading systemctl files..."
 systemctl --user daemon-reload
-systemctl --user restart matchbot.service
+echo "Starting matchbot.service..."
+systemctl --user start matchbot.service
