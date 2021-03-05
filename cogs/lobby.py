@@ -62,6 +62,7 @@ class LobbyCog(Cog, name='Pick/ban commands'):
     async def startmatch(self, ctx):
         ip = getenv('CSGO_SERVER_IP')
         port = getenv('CSGO_SERVER_PORT')
+        gotv_port = getenv('CSGO_SERVER_GOTV_PORT')
         password = getenv('CSGO_SERVER_PASSWORD')
         rcon_password = getenv('CSGO_SERVER_RCON_PASSWORD')
 
@@ -69,7 +70,8 @@ class LobbyCog(Cog, name='Pick/ban commands'):
         await get5.commands.force_loadmatch(ip, port, rcon_password)
 
         startmatch_embed = Embed(title="Server ready",
-                                 description=f"```connect {ip}:{port}; password {password}```")
+                                 description=(f"Play: \n```connect {ip}:{port}; password {password}```\n"
+                                              f"Watch on GOTV: \n```connect {ip}:{gotv_port}```"))
         await ctx.send(embed=startmatch_embed)
 
 def setup(bot):
