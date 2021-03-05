@@ -13,7 +13,6 @@ async def generate_config(team1: Team, team2: Team, maps: Iterable[Map], gametyp
     config["maplist"] = [m.ingame_name for m in maps]
     config["skip_veto"] = True
     config["cvars"] = {}
-    config["cvars"]["get5_check_auths"] = 1
     if '2v2' in gametype:
         config["cvars"]["get5_warmup_cfg"] = "get5/warmup_2v2.cfg"
         config["cvars"]["get5_live_cfg"] = "get5/live_2v2.cfg"
