@@ -1,7 +1,9 @@
 import json
 from classes import Team, Map
 from typing import Iterable
-from valve.rcon import RCON
+import aiorcon
+import asyncio
+
 from os import getenv
 
 async def generate_config(team1: Team, team2: Team, maps: Iterable[Map], gametype='5v5_bo1'):
@@ -50,11 +52,12 @@ def get_config_from_file():
         config = json.load(f)
     return config
 
-def send_rcon_loadmatch(server_ip, server_port, rcon_password):
-    rcon(f"get5_loadmatch_url \"{getenv('MATCH_CONFIG_URL')}\"", server_ip, server_port, rcon_password)
+async def send_rcon_loadmatch(ip, port, rcon_password):
+    await rcon(f"get5_loadmatch_url \"{getenv('MATCH_CONFIG_URL')}\"", ip, port, rcon_password)
 
-def rcon(command, server_ip, server_port, rcon_password):
-    with RCON((server_ip, int(server_port)), rcon_password) as rcon_connection:
-        response = rcon_connection(command)
+async def rcon(command, ip, port, rcon_password):
+    rconsole = await aiorcon.RCON.create(ip, int(port), rcon_password, loop=asyncio.get_event_loop())
+    response = await rconsole(command)
+    rconsole.close()
     return response
 
