@@ -10,7 +10,7 @@ import parsing
 
 wingman_map_pool = [Map('Cobblestone', 'de_cbble'),
                     Map('Inferno', 'de_inferno'),
-                    Map('Nuke', 'de_nuke'),
+                    Map('Nuke', 'de_shortnuke'),
                     Map('Overpass', 'de_overpass'),
                     Map('Shortdust', 'de_shortdust'),
                     Map('Train', 'de_train'),
