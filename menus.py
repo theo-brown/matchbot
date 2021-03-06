@@ -2,6 +2,7 @@ from discord import Embed, Role, Member
 from typing import Union, Iterable
 from classes import Team, Map
 import get5.commands
+import asyncio
 
 
 class SelectMenu:
@@ -133,7 +134,7 @@ class PickTeamsMenu(SelectMenu):
         self.finished = False
         self.captains = [captain1, captain2]
         self.teams = [Team(captain1), Team(captain2)]
-        self.players = {player.mention: player for player in players}
+        self.players = {player.mention: player for player in players if player not in self.captains}
         self.active_captain = captain1
         
         self.title = "Pick Teams"
@@ -175,7 +176,7 @@ class PickTeamsMenu(SelectMenu):
         self.update_preoptions()
         await self.update_message()
         self.finished = False
-        while not self.finished:
+        while not self.finished and self.remaining_options:
             await self.process_reactions()
 
     def check_reaction(self, reaction, user):
@@ -354,3 +355,108 @@ class VetoMenu(SelectMenu):
         self.update_fields()
         self.update_preoptions()
         await self.update_message()
+
+class Lobby:
+    def __init__(self, bot, players=[], captains=[]):
+        self.bot = bot
+        self.players = players
+        self.captains = captains
+        self.ready = {user: False for user in self.players}
+        self.join_emoji = "\N{BLACK RIGHT-POINTING TRIANGLE}"
+        self.ready_emoji = "\N{LARGE GREEN CIRCLE}"
+        self.unready_emoji = "\N{LARGE RED CIRCLE}"
+        self.captain_emoji = "\N{CROWN}"
+        self.emoji = [self.join_emoji, self.ready_emoji, self.captain_emoji]
+    
+    async def run(self, ctx):
+        self.message = await ctx.send(embed=self.embed())
+        for emoji in self.emoji:
+            await self.message.add_reaction(emoji)
+
+        while not (self.num_ready_players() == 10 and len(self.captains) == 2):
+            tasks = [asyncio.create_task(self.process_add_reactions()),
+                     asyncio.create_task(self.process_remove_reactions())]
+            # Run until one task is completed, then cancel the other one
+            completed_tasks, pending_tasks = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+            for task in pending_tasks:
+                    task.cancel()
+            
+    async def rerun(self, ctx):
+        await self.message.delete()
+        await self.run(ctx)
+    
+    async def process_add_reactions(self):
+        reaction, user = await self.bot.wait_for('reaction_add', check=self.check_reaction)
+        if reaction.emoji == self.join_emoji:
+            self.add_player(user)
+        elif reaction.emoji == self.ready_emoji and user in self.players:
+            self.ready[user] = True
+        elif reaction.emoji == self.captain_emoji and user in self.players:
+            self.add_captain(user)
+        await self.message.edit(embed=self.embed())
+
+    async def process_remove_reactions(self):
+        reaction, user = await self.bot.wait_for('reaction_remove', check=self.check_reaction)
+        if reaction.emoji == self.join_emoji and user in self.players:
+            self.remove_player(user)
+        elif reaction.emoji == self.ready_emoji and user in self.players:
+            self.ready[user] = False
+        elif reaction.emoji == self.captain_emoji and user in self.players:
+            self.remove_captain(user)
+        await self.message.edit(embed=self.embed())
+
+    def check_reaction(self, reaction, user):
+        return (reaction.message == self.message
+                and not user.bot
+                and str(reaction.emoji) in self.emoji)
+    
+    def add_player(self, user):
+        if user not in self.players and len(self.players) <= 10:
+            self.players.append(user)
+        self.ready[user] = False
+    
+    def remove_player(self, user):
+        self.remove_captain(user)
+        if user in self.players:
+            self.players.remove(user)
+        if user in self.ready.keys():
+            self.ready.pop(user)
+    
+    def add_captain(self, user):
+        if user not in self.captains:
+            if self.captains:
+                self.captains.pop()
+            self.captains.append(user)
+            
+    def remove_captain(self, user):
+        if user in self.captains:
+            self.captains.remove(user)
+
+    def num_ready_players(self):
+        return list(self.ready.values()).count(True)
+
+    def embed(self):
+        description_str = (f"{self.join_emoji} to join/leave\n"
+                           f"{self.ready_emoji} to ready/unready\n"
+                           f"{self.captain_emoji} to become captain\n\n")
+        captains_str = f"**{self.captain_emoji} Captains:**\n"
+        players_str = "**\nPlayers:**\n"
+        
+        for user in self.players:
+            emoji = ":green_circle:" if self.ready[user] else ":red_circle:"
+            if user in self.captains:
+                captains_str += emoji + user.mention + "\n"
+            else:
+                players_str += emoji + user.mention + "\n"
+                
+        embed = Embed(title="Matchbot Lobby",
+                      description=description_str+captains_str+players_str)
+        if self.num_ready_players() == 10 and len(self.captains) == 2:
+            footer_icon = "https://twemoji.maxcdn.com/v/latest/72x72/1f7e2.png"
+        elif len(self.players) == 10 or (self.num_ready_players() == len(self.players) and len(self.players) > 0):
+            footer_icon = "https://twemoji.maxcdn.com/v/latest/72x72/1f7e0.png"
+        else:
+            footer_icon = "https://twemoji.maxcdn.com/v/latest/72x72/1f534.png"
+        embed.set_footer(text=f"{self.num_ready_players()}/{len(self.players)} players ready",
+                         icon_url=footer_icon)
+        return embed
