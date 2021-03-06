@@ -37,24 +37,12 @@ class LobbyCog(Cog, name='Pick/ban commands'):
             await self.active_lobby.run(ctx)
         else:
             await self.active_lobby.rerun(ctx)
-        await self.teams(ctx, self.active_lobby.captains[0], self.active_lobby.captains[1], *self.active_lobby.players)
-        self.active_lobby = None
-    
-    @cmds.command()
-    async def teams(self, ctx, captain1: Member, captain2: Member, *players):
-        """Start a team pick with two captains."""
-        players_users = []
-        for player in players:
-            if isinstance(player, Member):
-                players_users.append(player)
-            else:
-                userid = parsing.convert_mention_into_id(player)
-                user = self.bot.get_user(userid)
-                players_users.append(user)
-
-        teams_menu = menus.PickTeamsMenu(self.bot, captain1, captain2, players_users)
+        await self.active_lobby.message.delete()
+        teams_menu = menus.PickTeamsMenu(self.bot, self.active_lobby.captains[0], self.active_lobby.captains[1], self.active_lobby.players)
         await teams_menu.run(ctx)
+        await teams_menu.message.delete()
         await self.veto(ctx, teams_menu.teams[0], teams_menu.teams[1], gametype='5v5_bo1')
+        self.active_lobby = None
     
     @cmds.command()
     async def veto(self, ctx: cmds.Context, team1: Union[Role, Member, Team], team2: Union[Role, Member, Team], gametype='2v2_bo3'):
