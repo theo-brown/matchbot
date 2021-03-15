@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from steam import steamid
 import logging
 from dotenv import load_dotenv
 from os import getenv
@@ -28,27 +27,9 @@ bot = commands.Bot(command_prefix='!', intents=bot_intents)
 bot.load_extension('database')
 bot.load_extension('cogs.channels')
 bot.load_extension('cogs.pickems')
+bot.load_extension('cogs.users')
 bot.load_extension('cogs.lobby')
 bot.load_extension('cogs.match')
-
-@bot.command()
-async def steam(ctx, *args):
-    """Link your Steam and Discord accounts for server configuration."""
-    args = list(args)
-    mentions = ctx.message.mentions
-    if len(mentions):
-        user = mentions[0]
-        args.remove(user.mention)
-    else:
-        user = ctx.author
-    if len(args) == 1:
-        profile_url = args[0]
-        steam64_id = steamid.steam64_from_url(profile_url)
-        await ctx.bot.db.users.add_steam64_id(user.id, steam64_id)
-        await ctx.send(f"Linked {user.mention} to <{profile_url}>")
-    else:
-        steam64_id = await ctx.bot.db.users.get_steam64_id(user.id)
-        await ctx.send(f"{user.mention}'s steam64_id is {steam64_id}")
 
 if __name__ == '__main__':
     bot.run(getenv('BOT_TOKEN'))
