@@ -291,8 +291,8 @@ class VetoMenu(SelectMenu):
                 return m
 
     def generate_sides_emoji(self):
-        self.emoji_to_option = {"\N{REGIONAL INDICATOR SYMBOL LETTER T}": "Terrorists",
-                                "\N{REGIONAL INDICATOR SYMBOL LETTER C}": "Counter-terrorists"}
+        self.emoji_to_option = {"<:terrorist:821019184258351114>": "Terrorists",
+                                "<:counterterrorist:821019184565059594>": "Counter-terrorists"}
         self.option_to_emoji = {option: emoji
                                 for emoji, option in self.emoji_to_option.items()}
         self.emoji = list(self.emoji_to_option.keys())
