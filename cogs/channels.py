@@ -1,7 +1,6 @@
 from discord import Message
 import discord.ext.commands as cmds
-
-from . import Cog
+from cogs import Cog
 
 class ChannelCog(Cog, name='Channel management'):
     @Cog.listener()

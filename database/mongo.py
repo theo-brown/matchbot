@@ -1,7 +1,7 @@
 from os import getenv
 from motor.motor_asyncio import AsyncIOMotorClient as MongoClient
 from motor.motor_asyncio import AsyncIOMotorCollection as MongoCollection
-import users
+from database import users
 
 
 async def copy_steam_ids():

@@ -3,7 +3,6 @@ from discord.ext import commands
 import logging
 from dotenv import load_dotenv
 from os import getenv
-import parsing
 
 load_dotenv()
 
@@ -13,9 +12,6 @@ logging.basicConfig(level=logging.INFO)
 # Log to file
 logger = logging.getLogger('discord')
 logger.setLevel(logging.INFO)
-handler = logging.FileHandler(filename='matchbot.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
 
 # Enable the bot to see members roles etc
 bot_intents = discord.Intents.default()
