@@ -5,8 +5,30 @@ import discord.ext.commands as cmds
 from cogs import Cog
 import parsing
 
+one_emoji = "1\N{COMBINING ENCLOSING KEYCAP}"
+two_emoji = "2\N{COMBINING ENCLOSING KEYCAP}"
+
 
 class MatchCog(Cog, name='Match commands'):
+    @Cog.listener()
+    async def on_reaction_add(self, reaction, user):
+        if user.bot:
+            return
+        # If it's a match message
+        if reaction.message.embeds:
+            if reaction.message.embeds[0].title == "**Match scheduled**":
+                # Remove the reaction if they are playing in the match
+                if user.mention in reaction.message.mentions:
+                    await reaction.remove(user)
+                # Remove any other reactions that the user has done to this message
+                for message_reaction in reaction.message.reactions:
+                    async for message_reaction_user in message_reaction.users():
+                        if (message_reaction_user == user
+                            and message_reaction.emoji in [one_emoji, two_emoji]
+                            and message_reaction.emoji != reaction.emoji):
+                            await message_reaction.remove(user)
+
+
     @cmds.command()
     async def match(self, ctx, team1: Union[Role, Member], team2: Union[Role, Member],
                     *schedule_args):
@@ -17,12 +39,11 @@ class MatchCog(Cog, name='Match commands'):
         embed = Embed(title="**Match scheduled**", colour=Colour.gold())
         embed.set_footer(text=datetime_str)
 
-        for i, team in enumerate((team1, team2)):
-            emoji = f'{i+1}\N{COMBINING ENCLOSING KEYCAP} '
+        for team, emoji in zip([team1, team2], [one_emoji, two_emoji]):
             if isinstance(team, Member):
                 embed.add_field(name=emoji, value=team.mention)
             elif isinstance(team, Role):
-                embed.add_field(name=emoji + team.name,
+                embed.add_field(name=emoji + " " + team.name,
                                 value='\n'.join(m.mention for m in team.members))
             else:
                 await ctx.send(f"Error: teams must be mentioned by role or user "
@@ -31,9 +52,8 @@ class MatchCog(Cog, name='Match commands'):
 
         send_channel = ctx.guild.get_channel(await ctx.bot.db.channels.get_redirect_channel(ctx.channel.id))
         match_message = await send_channel.send(embed=embed)
-        await match_message.add_reaction("1\N{COMBINING ENCLOSING KEYCAP}")
-        await match_message.add_reaction("2\N{COMBINING ENCLOSING KEYCAP}")
-
+        await match_message.add_reaction(one_emoji)
+        await match_message.add_reaction(two_emoji)
 
     @cmds.command()
     async def result(self, ctx, *args):
@@ -62,12 +82,12 @@ class MatchCog(Cog, name='Match commands'):
                                " (users or roles)")
                 return
             for i, team in enumerate(mentions):
-                emoji = f'{i + 1}\N{COMBINING ENCLOSING KEYCAP} '
+                emoji = [one_emoji, two_emoji][i]
                 if isinstance(team, Member):
                     teams[i] = emoji
                     players[i] = team.mention
                 elif isinstance(team, Role):
-                    teams[i] = emoji + team.name
+                    teams[i] = emoji + " " + team.name
                     players[i] = '\n'.join(m.mention for m in team.members)
                 else:
                     await ctx.send(f"Error: teams must be mentioned by role or user "
@@ -83,9 +103,9 @@ class MatchCog(Cog, name='Match commands'):
             games_won[r['winner']] += 1  # r['winner'] is 0 if tie, 1 if t1, 2 if t2
 
         if games_won[1] > games_won[2]:
-            winner_emote = "1\N{COMBINING ENCLOSING KEYCAP}"
-            loser_emote = "2\N{COMBINING ENCLOSING KEYCAP}"
-            if teams[0] == "1\N{COMBINING ENCLOSING KEYCAP} ":
+            winner_emote = one_emoji
+            loser_emote = two_emoji
+            if teams[0] == one_emoji:
                 winner_user_id = parsing.convert_mention_into_id(players[0])
                 winner_user = self.bot.get_user(winner_user_id)
                 footertext = winner_user.display_name + " wins"
@@ -93,9 +113,9 @@ class MatchCog(Cog, name='Match commands'):
                 footertext = teams[0][3:] + " wins"
             footericon = "https://twemoji.maxcdn.com/v/latest/72x72/31-20e3.png"
         elif games_won[2] > games_won[1]:
-            winner_emote = "2\N{COMBINING ENCLOSING KEYCAP}"
-            loser_emote = "1\N{COMBINING ENCLOSING KEYCAP}"
-            if teams[1] == "2\N{COMBINING ENCLOSING KEYCAP} ":
+            winner_emote = two_emoji
+            loser_emote = one_emoji
+            if teams[1] == two_emoji:
                 winner_user_id = parsing.convert_mention_into_id(players[1])
                 winner_user = self.bot.get_user(winner_user_id)
                 footertext = winner_user.display_name + " wins"
