@@ -1,6 +1,6 @@
 import discord.ext.commands as cmds
 from steam import steamid
-from . import Cog
+from cogs import Cog
 import parsing
 
 class UsersCog(Cog, name="User database commands"):

@@ -3,10 +3,9 @@ from discord import Role, Member, Embed
 import get5.commands
 import discord.ext.commands as cmds
 from os import getenv
-from . import Cog
+from cogs import Cog
 from classes import Map, Team
 import menus
-import parsing
 
 
 wingman_map_pool = [Map('Cobblestone', 'de_cbble'),

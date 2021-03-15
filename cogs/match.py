@@ -2,7 +2,7 @@ from typing import Union
 from discord import Embed, Role, Member, Colour, utils, AllowedMentions
 import discord.ext.commands as cmds
 
-from . import Cog
+from cogs import Cog
 import parsing
 
 

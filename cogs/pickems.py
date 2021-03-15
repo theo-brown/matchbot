@@ -1,7 +1,7 @@
 from discord import AllowedMentions
 import discord.ext.commands as cmds
 
-from . import Cog
+from cogs import Cog
 
 class PickemsCog(Cog, name="Pick'em prediction commands"):
     @cmds.command()
