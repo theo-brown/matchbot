@@ -3,6 +3,7 @@ from discord.ext import commands
 import logging
 from dotenv import load_dotenv
 from os import getenv
+from newmenus import SelectMenu
 
 load_dotenv()
 
