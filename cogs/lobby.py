@@ -8,21 +8,23 @@ from classes import Map, Team
 import menus
 
 
-wingman_map_pool = [Map('Cobblestone', 'de_cbble'),
-                    Map('Inferno', 'de_inferno'),
-                    Map('Nuke', 'de_shortnuke'),
-                    Map('Overpass', 'de_overpass'),
-                    Map('Shortdust', 'de_shortdust'),
-                    Map('Train', 'de_train'),
-                    Map('Vertigo', 'de_vertigo')]
+def wingman_map_pool():
+    return [Map('Cobblestone', 'de_cbble'),
+            Map('Inferno', 'de_inferno'),
+            Map('Nuke', 'de_shortnuke'),
+            Map('Overpass', 'de_overpass'),
+            Map('Shortdust', 'de_shortdust'),
+            Map('Train', 'de_train'),
+            Map('Vertigo', 'de_vertigo')]
 
-active_duty_map_pool = [Map('Dust 2', 'de_dust2'),
-                        Map('Inferno', 'de_inferno'),
-                        Map('Mirage', 'de_mirage'),
-                        Map('Nuke', 'de_nuke'),
-                        Map('Overpass', 'de_overpass'),
-                        Map('Train', 'de_train'),
-                        Map('Vertigo', 'de_vertigo')]
+def active_duty_map_pool():
+    return [Map('Dust 2', 'de_dust2'),
+            Map('Inferno', 'de_inferno'),
+            Map('Mirage', 'de_mirage'),
+            Map('Nuke', 'de_nuke'),
+            Map('Overpass', 'de_overpass'),
+            Map('Train', 'de_train'),
+            Map('Vertigo', 'de_vertigo')]
 
 
 class LobbyCog(Cog, name='Pick/ban commands'):
@@ -47,9 +49,9 @@ class LobbyCog(Cog, name='Pick/ban commands'):
     async def veto(self, ctx: cmds.Context, team1: Union[Role, Member, Team], team2: Union[Role, Member, Team], gametype='2v2_bo3'):
         """Start a veto between two teams."""
         if '2v2' in gametype:
-            map_pool = wingman_map_pool
+            map_pool = wingman_map_pool()
         else:
-            map_pool = active_duty_map_pool
+            map_pool = active_duty_map_pool()
         teams = []
         for i, team in enumerate([team1, team2]):
             if not isinstance(team, Team):
