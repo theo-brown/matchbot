@@ -3,7 +3,7 @@ from discord.ext import commands
 import logging
 from dotenv import load_dotenv
 from os import getenv
-from newmenus import SelectMenu
+import sys
 
 load_dotenv()
 
@@ -35,7 +35,8 @@ async def on_command_error(ctx, error):
                     f'In channel: {ctx.channel.name}\n'
                     f'From user: {ctx.author}\n'
                     f'In message: {ctx.message.content}\n'
-                    f'Error: {error}')
+                    f'Error: {error}\n'
+                    f'Traceback: {sys.exc_info()[2]}')
 
     logging_channel = bot.get_channel(int(getenv('LOG_CHANNEL_ID')))
     await logging_channel.send(f'```{error_string}```')
