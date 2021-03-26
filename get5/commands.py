@@ -16,9 +16,11 @@ async def generate_config(team1: Team, team2: Team, maps: Iterable[Map], gametyp
     if '2v2' in gametype:
         config["cvars"]["get5_warmup_cfg"] = "get5/warmup_2v2.cfg"
         config["cvars"]["get5_live_cfg"] = "get5/live_2v2.cfg"
+        config["players_per_team"] = 2
     else:
         config["cvars"]["get5_warmup_cfg"] = "get5/warmup_5v5.cfg"
         config["cvars"]["get5_live_cfg"] = "get5/live_5v5.cfg"
+        config["players_per_team"] = 5
     config["map_sides"] = []
     for m in maps:
         if m.sides["ct"] == team1:
