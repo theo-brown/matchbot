@@ -1,19 +1,19 @@
 import json
-from classes import Team, Map
+from classes import Team, Map, Match
 from typing import Iterable
 import aiorcon
 import asyncio
 from os import getenv
 
-async def generate_config(team1: Team, team2: Team, maps: Iterable[Map], gametype='5v5_bo1'):
+async def generate_config(match: Match):
     config = {}
     # Match settings
-    config["matchid"] = f"{team1.name} vs {team2.name}"
-    config["num_maps"] = len(maps)
-    config["maplist"] = [m.ingame_name for m in maps]
+    config["matchid"] = f"{match.teams[0].name} vs {match.teams[1].name}"
+    config["num_maps"] = len(match.maps)
+    config["maplist"] = [m.ingame_name for m in match.maps]
     config["skip_veto"] = True
     config["cvars"] = {}
-    if '2v2' in gametype:
+    if '2v2' in match.gametype:
         config["cvars"]["get5_warmup_cfg"] = "get5/warmup_2v2.cfg"
         config["cvars"]["get5_live_cfg"] = "get5/live_2v2.cfg"
         config["players_per_team"] = 2
@@ -22,19 +22,19 @@ async def generate_config(team1: Team, team2: Team, maps: Iterable[Map], gametyp
         config["cvars"]["get5_live_cfg"] = "get5/live_5v5.cfg"
         config["players_per_team"] = 5
     config["map_sides"] = []
-    for m in maps:
-        if m.sides["ct"] == team1:
+    for m in match.maps:
+        if m.sides["ct"] == match.teams[0]:
             config["map_sides"].append("team1_ct")
-        elif m.sides["ct"] == team2:
+        elif m.sides["ct"] == match.teams[1]:
             config["map_sides"].append("team2_ct")
-        elif m.sides["t"] == team1:
+        elif m.sides["t"] == match.teams[0]:
             config["map_sides"].append("team1_t")
-        elif m.sides["t"] == team2:
+        elif m.sides["t"] == match.teams[1]:
             config["map_sides"].append("team2_t")
         else:
             config["map_sides"].append("knife")
     # Team settings
-    for i, team in enumerate([team1, team2]):
+    for i, team in enumerate(match.teams):
         config[f"team{i+1}"] = {}
         t = config[f"team{i+1}"]
         t["name"] = team.name
