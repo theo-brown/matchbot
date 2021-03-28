@@ -51,12 +51,10 @@ class MongoCog(cmds.Cog, name='Mongo update script'):
     @cmds.is_owner()
     async def update(self, ctx):
         async with ctx.typing():
-            user_list = await self.mongo_users.find().to_list(length=None)
-            users_with_steam_ids = []
-            for user in user_list:
-                if 'steam_id' in user.keys():
-                    users_with_steam_ids.append(user)
-            await users.add_steam64_ids(users_with_steam_ids)
+            await users.add_steam64_ids({
+                user['discord_id']: user['steam_id']
+                    async for user in self.mongo_users.find() if 'discord_id' in user
+            })
         await ctx.send(f'Successfully upserted {len(users_with_steam_ids)} users.')
 
         # no point resuming after full update
