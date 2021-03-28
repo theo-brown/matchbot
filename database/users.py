@@ -34,7 +34,7 @@ async def add_steam64_ids(users):
     await db.executemany(
         "INSERT OR REPLACE INTO users(user_id, steam64_id)"
         " VALUES (?, ?)",
-        ((user['discord_id'], user['steam_id']) for user in users)
+        ((discord, steam) for discord,steam in users.items())
     )
 
 
