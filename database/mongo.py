@@ -1,60 +1,64 @@
 from motor.motor_asyncio import AsyncIOMotorClient as MongoClient
-from motor.motor_asyncio import AsyncIOMotorCollection as MongoCollection
-from database import users
-
-import aiosqlite
-import aiofiles
-import asyncio
 from bson.json_util import loads,dumps
-
-from sys import argv
+import aiofiles, aiofiles.os
 from os import getenv
-from dotenv import load_dotenv
-load_dotenv("../.env")
+from discord.ext import tasks, commands as cmds
+from . import users
 
-mongo_users: MongoCollection
 
-async def copy_steam_ids():
-    print('batch updating')
-    user_list = await mongo_users.find().to_list(length=None)
-    users_with_steam_ids = []
-    for user in user_list:
-        if 'steam_id' in user.keys():
-            users_with_steam_ids.append(user)
-    await users.add_steam64_ids(users_with_steam_ids)
-    print('done')
+class MongoCog(cmds.Cog, name='Mongo update script'):
+    def __init__(self, bot):
+        self.bot = bot
+        self.mongo_users = MongoClient(getenv('MONGO_URI')).popskill.user_links
+        self.token = None
+        self.watch.start()
 
-async def watch_mongo():
-    try:
-        async with aiofiles.open('resume', 'r') as tokenfile:
-            resume_token = loads(await tokenfile.read())
-    except FileNotFoundError:
-        resume_token = None
-
-    try:
-        print('watching')
-        async with mongo_users.watch({'$match': {'operationType': {'$in': ['insert', 'update', 'replace']}}},
-                                     full_document='updateLookup',
-                                     resume_after=resume_token) as stream:
+    @tasks.loop(count=1)
+    async def watch(self):
+        async with self.mongo_users.watch([{'$match': {'operationType': {'$in': ['insert', 'update', 'replace']}}}],
+                                          full_document='updateLookup',
+                                          resume_after=self.token) as stream:
             async for change in stream:
-                print(change)
                 entry = change['fullDocument']
                 if 'steam_id' in entry:
                     await users.add_steam64_id(entry['discord_id'], entry['steam_id'])
-                resume_token = stream.resume_token
-    finally:
-        print('exiting')
-        assert resume_token  # only save if not None
-        async with aiofiles.open('resume', 'w') as tokenfile:
-            await tokenfile.write(dumps(resume_token))
+                self.token = stream.resume_token
 
-async def run():
-    global mongo_users
-    mongo_users = MongoClient(getenv('MONGO_URI')).popskill.user_links
-    users.db = await aiosqlite.connect("database.db", isolation_level=None)
+    @watch.before_loop
+    async def get_token(self):
+        try:
+            async with aiofiles.open('resume', 'rb') as tokenfile:
+                self.token = loads(await tokenfile.read())
+        except FileNotFoundError:
+            pass  # token is None by default
 
-    action = copy_steam_ids if 'update' in argv else watch_mongo
-    await action()
+    @watch.after_loop
+    async def store_token(self):
+        if self.token is None:
+            return
 
-if __name__ == '__main__':
-    asyncio.run(run())
+        async with aiofiles.open('resume', 'wb') as tokenfile:
+            await tokenfile.write(dumps(self.token))
+
+    @watch.error
+    async def log_error(self, error):
+        info = await self.bot.application_info()
+        await info.owner.send(
+            f'**{type(error).__name__}**\n{error}'
+        )
+
+    @cmds.command()
+    @cmds.is_owner()
+    async def update(self, ctx):
+        async with ctx.typing():
+            user_list = await self.mongo_users.find().to_list(length=None)
+            users_with_steam_ids = []
+            for user in user_list:
+                if 'steam_id' in user.keys():
+                    users_with_steam_ids.append(user)
+            await users.add_steam64_ids(users_with_steam_ids)
+        await ctx.send(f'Successfully upserted {len(users_with_steam_ids)} users.')
+
+        # no point resuming after full update
+        await aiofiles.os.remove('resume')
+        self.watch.restart()
