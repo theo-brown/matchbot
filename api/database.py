@@ -2,6 +2,8 @@ from dotenv import load_dotenv
 from os import getenv
 import aiomysql
 import asyncio
+from typing import Iterable
+from api import Team, User
 
 load_dotenv()
 DB_HOST = getenv("DB_HOST")
@@ -10,18 +12,24 @@ DB_USER = getenv("DB_USER")
 DB_PASSWORD = getenv("DB_PASSWORD")
 DB_DATABASE_NAME = getenv("DB_DATABASE_NAME")
 
-
+# dbm = DatabaseManager(DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_DATABASE_NAME)
+# t = Team("aimbridge", [User(1, "p1"), User(2, "p2"), User(3, "p3"), User(4, "p4"), User(5, "p5")])
 class DatabaseManager():
-    def __init__(self):
+    def __init__(self, host, port, user, password, database_name):
+        self.host = host
+        self.port = int(port)
+        self.user = user
+        self.password = password
+        self.database_name = database_name
         self.loop = asyncio.get_event_loop()
         self.loop.run_until_complete(self.async_init())
 
     async def async_init(self):
-        self.db = await aiomysql.connect(host=DB_HOST,
-                                         port=DB_PORT,
-                                         user=DB_USER,
-                                         password=DB_PASSWORD,
-                                         db=DB_DATABASE_NAME,
+        self.db = await aiomysql.connect(host=self.host,
+                                         port=self.port,
+                                         user=self.user,
+                                         password=self.password,
+                                         db=self.database_name,
                                          loop=self.loop)
 
         async with self.db.cursor() as cursor:
@@ -33,7 +41,7 @@ class DatabaseManager():
                                  "CONSTRAINT unique_user UNIQUE (steam_id, discord_id, display_name));")
 
             await cursor.execute("CREATE TABLE IF NOT EXISTS matchbot_teams ("
-                                 "team_id           BIGINT      UNSIGNED NOT NULL,"
+                                 "team_id           VARCHAR(32)          NOT NULL,"
                                  "team_name         VARCHAR(64)          NOT NULL,"
                                  "team_tag          VARCHAR(15)          NOT NULL DEFAULT '',"
                                  "number_of_players TINYINT     UNSIGNED NOT NULL,"
@@ -45,7 +53,7 @@ class DatabaseManager():
                                  "PRIMARY KEY (team_id));")
 
             await cursor.execute("CREATE TABLE IF NOT EXISTS matchbot_stats_matches ("
-                                 "matchid     BIGINT      UNSIGNED NOT NULL,"
+                                 "matchid     VARCHAR(32)          NOT NULL,"
                                  "start_time  DATETIME             NOT NULL,"
                                  "end_time    DATETIME             NULL     DEFAULT NULL,"
                                  "winner      VARCHAR(64)          NOT NULL DEFAULT '',"
@@ -57,7 +65,7 @@ class DatabaseManager():
                                  "PRIMARY KEY (matchid));")
 
             await cursor.execute("CREATE TABLE IF NOT EXISTS matchbot_stats_maps ("
-                                 "matchid     BIGINT      UNSIGNED NOT NULL,"
+                                 "matchid     VARCHAR(32)          NOT NULL,"
                                  "mapnumber   TINYINT     UNSIGNED NOT NULL,"
                                  "start_time  DATETIME             NOT NULL,"
                                  "end_time    DATETIME             NULL     DEFAULT NULL,"
@@ -70,7 +78,7 @@ class DatabaseManager():
                                  " REFERENCES matchbot_stats_matches (matchid));")
 
             await cursor.execute("CREATE TABLE IF NOT EXISTS matchbot_stats_players ("
-                                 "matchid            BIGINT      UNSIGNED NOT NULL,"
+                                 "matchid            VARCHAR(32)          NOT NULL,"
                                  "mapnumber          TINYINT     UNSIGNED NOT NULL,"
                                  "steamid64          BIGINT      UNSIGNED NOT NULL,"
                                  "team               VARCHAR(64)          NOT NULL DEFAULT '',"
@@ -111,36 +119,75 @@ class DatabaseManager():
     def close(self):
         self.db.close()
 
-    async def add_users(self, users):
+    async def add_users(self, users: Iterable[User]):
         async with self.db.cursor() as cursor:
-            await cursor.executemany(("INSERT INTO matchbot_users(steam_id, discord_id, display_name)"
-                                      " VALUES (%s, %s, %s) AS new_entry"
-                                      " ON DUPLICATE KEY UPDATE steam_id = new_entry.steam_id,"
-                                                               "discord_id = new_entry.discord_id,"
-                                                               "display_name = new_entry.display_name;"),
-                                                                users)
+            await cursor.executemany("INSERT INTO matchbot_users(steam_id, discord_id, display_name)"
+                                     " VALUES (%s, %s, %s) AS new_entry"
+                                     " ON DUPLICATE KEY UPDATE steam_id = new_entry.steam_id,"
+                                                              "discord_id = new_entry.discord_id,"
+                                                              "display_name = new_entry.display_name;",
+                                                               [(user.steam_id, user.discord_id, user.display_name)
+                                                                for user in users])
             await self.db.commit()
 
-    async def get_users_from_steam_ids(self, steam_ids):
+    async def get_users(self, column: str, values: Iterable) -> Iterable[User]:
+        if column not in ["steam_id", "discord_id", "display_name"]:
+            raise ValueError(f"Unrecognised column {column} (expected 'steam_id', 'discord_id', or 'display_name')")
         async with self.db.cursor() as cursor:
-            parameters = ", ".join(['%s'] * len(steam_ids))
+            parameters = ", ".join(['%s'] * len(values))
             await cursor.execute("SELECT steam_id, discord_id, display_name"
-                                 f" FROM matchbot_users WHERE steam_id IN ({parameters});", steam_ids)
-            users = await cursor.fetchall()
-        return users
+                                 f" FROM matchbot_users WHERE {column} IN ({parameters});", values)
+            users_raw = await cursor.fetchall()
+        return [User(steam_id=user[0], discord_id=user[1], display_name=user[2]) for user in users_raw]
 
-    async def get_users_from_discord_ids(self, discord_ids):
+    async def add_team(self, team: Team):
+        number_of_players = len(team.players)
+        steam_ids_padded = team.steam_ids() + [None]*(5 - number_of_players)
         async with self.db.cursor() as cursor:
-            parameters = ", ".join(['%s'] * len(discord_ids))
-            await cursor.executemany("SELECT steam_id, discord_id, display_name"
-                                      f" FROM matchbot_users WHERE discord_id IN ({parameters});", discord_ids)
-            users = await cursor.fetchall()
-        return users
+            await cursor.execute(f"INSERT INTO matchbot_teams(team_id, team_name, team_tag, number_of_players, "
+                                                             "steamid_p1, steamid_p2, steamid_p3, steamid_p4, steamid_p5)"
+                                      " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) AS new_entry"
+                                      " ON DUPLICATE KEY UPDATE team_id = new_entry.team_id,"
+                                                               "team_name = new_entry.team_name,"
+                                                               "team_tag = new_entry.team_tag,"
+                                                               "number_of_players = new_entry.number_of_players,"
+                                                               "steamid_p1 = new_entry.steamid_p1,"
+                                                               "steamid_p2 = new_entry.steamid_p2,"
+                                                               "steamid_p3 = new_entry.steamid_p3,"
+                                                               "steamid_p4 = new_entry.steamid_p4,"
+                                                               "steamid_p5 = new_entry.steamid_p5;",
+                                                                (team.id, team.name, team.tag, len(team.players),
+                                                                 *steam_ids_padded))
+            await self.db.commit()
 
-    async def get_users_from_display_names(self, display_names):
+    async def get_teams(self, column: str, values: Iterable) -> Iterable[Team]:
+        if column not in ["team_id", "team_name", "team_tag", "steam_id"]:
+            raise ValueError(f"Unrecognised column {column} (expected 'team_id', 'team_name', 'team_tag', 'steam_id')")
+
+        parameters = ", ".join(['%s'] * len(values))
+        if column == "steam_id":
+            query = ("SELECT team_id, team_name, team_tag, number_of_players, "
+                     "steamid_p1, steamid_p2, steamid_p3, steamid_p4, steamid_p5"
+                    f" FROM matchbot_teams WHERE steamid_p1 IN ({parameters})"
+                                            f"OR steamid_p2 IN ({parameters})"
+                                            f"OR steamid_p3 IN ({parameters})"
+                                            f"OR steamid_p4 IN ({parameters})"
+                                            f"OR steamid_p5 IN ({parameters});")
+            values = values*5
+        else:
+            query = ("SELECT team_id, team_name, team_tag, number_of_players, "
+                     "steamid_p1, steamid_p2, steamid_p3, steamid_p4, steamid_p5"
+                    f" FROM matchbot_teams WHERE {column} IN ({parameters});")
         async with self.db.cursor() as cursor:
-            parameters = ", ".join(['%s'] * len(display_names))
-            await cursor.executemany("SELECT steam_id, discord_id, display_name"
-                                      f" FROM matchbot_users WHERE display_name IN {parameters};", display_names)
-            users = await cursor.fetchall()
-        return users
+            await cursor.execute(query, values)
+            teams_raw = await cursor.fetchall()
+        output = []
+        for team in teams_raw:
+            team_id = team[0]
+            team_name = team[1]
+            team_tag = team[2]
+            num_players = team[3]
+            steam_ids = team[4:4+num_players]
+            players = await self.get_users('steam_id', steam_ids)
+            output.append(Team(name=team_name, players=players, tag=team_tag, id=team_id))
+        return output
