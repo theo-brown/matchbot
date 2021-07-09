@@ -1,0 +1,3 @@
+[submodule "csgo-docker"]
+	path = csgo-docker
+	url = https://github.com/theo-brown/csgo-docker
