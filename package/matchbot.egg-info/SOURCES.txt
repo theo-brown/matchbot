@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+setup.cfg
+matchbot/__init__.py
+matchbot/demo.py
+matchbot.egg-info/PKG-INFO
+matchbot.egg-info/SOURCES.txt
+matchbot.egg-info/dependency_links.txt
+matchbot.egg-info/requires.txt
+matchbot.egg-info/top_level.txt

@@ -1,0 +1,5 @@
+asyncio
+aiorcon
+aiodocker
+aiopg
+discord
