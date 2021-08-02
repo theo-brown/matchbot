@@ -1,25 +1,17 @@
-# from dotenv import load_dotenv
-from os import getenv
 import aiodocker
 from matchbot import Match
 from gameserver import GameServer
 
 
-# Load environment variables
-# load_dotenv()
-SERVER_TOKEN = getenv("SERVER_TOKEN")
-SERVER_IP = getenv("SERVER_IP")
-SERVER_PORT_MIN = int(getenv("SERVER_PORT_MIN"))
-SERVER_PORT_MAX = int(getenv("SERVER_PORT_MAX"))
-
-
 class GameServerManager:
-    def __init__(self):
+    def __init__(self, server_token, server_ip, server_port_min, server_port_max):
         self.docker = aiodocker.Docker()
         self.current_matches = {}
-        self.ip = SERVER_IP
 
-        port_range = [i for i in range(SERVER_PORT_MIN, SERVER_PORT_MAX + 1)]
+        self.server_token = server_token
+        self.ip = server_ip
+
+        port_range = [i for i in range(server_port_min, server_port_max + 1)]
         self.max_number_of_servers = len(port_range) // 2
         connect_ports = port_range[:self.max_number_of_servers]
         gotv_ports = port_range[self.max_number_of_servers:]
@@ -33,7 +25,7 @@ class GameServerManager:
         self.current_matches[match.id] = match
 
         server_ports = self.available_ports.pop()
-        match.server = GameServer(token=SERVER_TOKEN,
+        match.server = GameServer(token=self.server_token,
                                   ip=self.ip,
                                   port=server_ports["port"],
                                   gotv_port=server_ports["gotv_port"],
@@ -54,5 +46,3 @@ class GameServerManager:
             match.server = None
             self.available_ports.add({"port": port, "gotv_port": gotv_port})
         self.current_matches.pop(match_id)
-
-
