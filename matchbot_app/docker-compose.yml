@@ -1,0 +1,36 @@
+version: "3.7"
+
+services:
+  database:
+    image: "postgres:alpine"
+    restart: always
+    environment:
+    - POSTGRES_USER
+    - POSTGRES_PASSWORD
+    - POSTGRES_DB
+    volumes:
+      - ./database/data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+
+#  manager:
+#    build: manager
+#    depends_on:
+#      - database
+#    volumes:
+#     - /var/run/docker.sock:/var/run/docker.sock
+#
+#  discord:
+#    build: discord
+#    depends_on:
+#      - database
+#    environment:
+#      BOT_TOKEN: bot_token
+
+  web:
+    build: web
+    depends_on:
+      - database
+    environment:
+    - POSTGRES_USER
+    - POSTGRES_PASSWORD
+    - POSTGRES_DB

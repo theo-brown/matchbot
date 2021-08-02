@@ -2,7 +2,7 @@ FROM python:3
 
 WORKDIR /app
 
-RUN pip install aioredis aiopg
+RUN pip install aiopg
 
 COPY run.py /app
 
