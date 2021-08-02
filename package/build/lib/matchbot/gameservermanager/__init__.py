@@ -1,4 +1,4 @@
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 from os import getenv
 import aiodocker
 from matchbot import Match
@@ -6,7 +6,7 @@ from gameserver import GameServer
 
 
 # Load environment variables
-# load_dotenv()
+load_dotenv()
 SERVER_TOKEN = getenv("SERVER_TOKEN")
 SERVER_IP = getenv("SERVER_IP")
 SERVER_PORT_MIN = int(getenv("SERVER_PORT_MIN"))

@@ -1,0 +1,16 @@
+LICENSE.txt
+README.md
+pyproject.toml
+setup.cfg
+matchbot/__init__.py
+matchbot/demo.py
+matchbot/databasemanager/__init__.py
+matchbot/discordbot/__init__.py
+matchbot/discordbot/usercog.py
+matchbot/gameservermanager/__init__.py
+matchbot/gameservermanager/gameserver.py
+matchbot_dev.egg-info/PKG-INFO
+matchbot_dev.egg-info/SOURCES.txt
+matchbot_dev.egg-info/dependency_links.txt
+matchbot_dev.egg-info/requires.txt
+matchbot_dev.egg-info/top_level.txt

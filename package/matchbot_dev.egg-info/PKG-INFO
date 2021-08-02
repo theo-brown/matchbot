@@ -1,5 +1,5 @@
 Metadata-Version: 2.1
-Name: matchbot
+Name: matchbot-dev
 Version: 0.0.2
 Summary: Start dedicated servers for CS:GO matches from a web app or Discord
 Home-page: https://github.com/theo-brown/matchbot
