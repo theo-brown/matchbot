@@ -2,6 +2,7 @@ from typing import Iterable
 from uuid import uuid4
 import json
 
+
 class User:
     def __init__(self, steam_id, display_name, discord_id=None):
         self.steam_id = steam_id
