@@ -1,17 +1,17 @@
 import aiodocker
 from matchbot import Match
-from gameserver import GameServer
+from matchbot.gameservermanager.gameserver import GameServer
 
 
 class GameServerManager:
-    def __init__(self, server_token, server_ip, server_port_min, server_port_max):
+    def __init__(self, server_token: str, server_ip: str, server_port_min: int, server_port_max: int):
         self.docker = aiodocker.Docker()
         self.current_matches = {}
 
         self.server_token = server_token
         self.ip = server_ip
 
-        port_range = [i for i in range(server_port_min, server_port_max + 1)]
+        port_range = [i for i in range(int(server_port_min), int(server_port_max) + 1)]
         self.max_number_of_servers = len(port_range) // 2
         connect_ports = port_range[:self.max_number_of_servers]
         gotv_ports = port_range[self.max_number_of_servers:]

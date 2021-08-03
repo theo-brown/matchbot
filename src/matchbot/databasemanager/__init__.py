@@ -1,16 +1,7 @@
-from dotenv import load_dotenv
-from os import getenv
 import asyncio
 import aiopg
 from typing import Iterable
 from matchbot import Team, User
-
-load_dotenv()
-DB_HOST = getenv("DB_HOST")
-DB_PORT = int(getenv("DB_PORT"))
-DB_USER = getenv("DB_USER")
-DB_PASSWORD = getenv("DB_PASSWORD")
-DB_DATABASE_NAME = getenv("DB_DATABASE_NAME")
 
 
 class DatabaseManager:
