@@ -19,10 +19,9 @@ services:
     depends_on:
       - database
     environment:
-      - SERVER_TOKEN
-      - SERVER_IP
-      - SERVER_PORT_MIN
-      - SERVER_PORT_MAX
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
     volumes:
      - /var/run/docker.sock:/var/run/docker.sock
 
