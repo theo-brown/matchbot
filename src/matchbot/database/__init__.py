@@ -2,26 +2,35 @@ import asyncio
 import aiopg
 from typing import Iterable
 from matchbot import Team, User
-from matchbot.gameservermanager.gameserver import GameServer
+from matchbot.gameserver import GameServer
+from psycopg2 import OperationalError
+from time import sleep
 
 
 class DatabaseInterface:
 
-    def __init__(self, host, port, user, password, database_name):
+    def __init__(self, host, user, password, database_name, port=5432):
         self.host = host
         self.port = int(port)
         self.user = user
         self.password = password
         self.database_name = database_name
         self.db = None
-        asyncio.get_event_loop().run_until_complete(self.init_db())
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.init_db())
 
     async def init_db(self):
-        self.db = await aiopg.connect(host=self.host,
-                                      port=self.port,
-                                      user=self.user,
-                                      password=self.password,
-                                      database=self.database_name)
+        while not self.db:
+            try:
+                self.db = await aiopg.connect(host=self.host,
+                                              port=self.port,
+                                              user=self.user,
+                                              password=self.password,
+                                              database=self.database_name)
+                print("Connected to database.")
+            except OperationalError:
+                sleep(1)
+                continue
 
     def close(self):
         self.db.close()
@@ -37,7 +46,7 @@ class DatabaseInterface:
         gameservers = []
         async with self.db.cursor() as cursor:
             await cursor.execute("SELECT * FROM game_servers")
-            for server in cursor.fetchall():
+            for server in await cursor.fetchall():
                 gameservers.append(GameServer(server[0], server[1], server[2], server[3]))
         return gameservers
 
