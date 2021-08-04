@@ -9,7 +9,7 @@ from matchbot import Match
 
 
 class GameServer:
-    def __init__(self, token, ip, port=27015, gotv_port=27020, id=uuid4().hex):
+    def __init__(self, token, ip, port, gotv_port, id=uuid4().hex):
         self.token = token
         self.id = id
         self.ip = ip
@@ -23,9 +23,11 @@ class GameServer:
         if self.match is None:
             raise ValueError("No match loaded.")
 
+        # Generate passwords
         self.password = token_urlsafe(6)
         self.rcon_password = token_urlsafe(6)
         self.gotv_password = token_urlsafe(6)
+
         self.connect_str = f"connect {self.ip}:{self.port}; password {self.password}"
         self.connect_gotv_str = f"connect {self.ip}:{self.gotv_port}; password {self.gotv_password}"
 
