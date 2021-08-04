@@ -21,9 +21,18 @@ services:
     depends_on:
       - database
     environment:
+      - PUBLIC_IP
       - POSTGRES_USER
       - POSTGRES_PASSWORD
       - POSTGRES_DB
+      - PORT_MIN
+      - PORT_MAX
+      - GOTV_PORT_MIN
+      - GOTV_PORT_MAX
+    ports:
+    - "$PORT_MIN-$PORT_MAX:$PORT_MIN-$PORT_MAX/tcp"
+    - "$PORT_MIN-$PORT_MAX:$PORT_MIN-$PORT_MAX/udp"
+    - "$GOTV_PORT_MIN-$GOTV_PORT_MAX:$GOTV_PORT_MIN-$GOTV_PORT_MAX/udp"
     volumes:
      - /var/run/docker.sock:/var/run/docker.sock
 

@@ -38,18 +38,16 @@ class DatabaseInterface:
         del self.db
         self.db = None
 
-    async def add_gameserver(self, server_token, ip, port, gotv_port):
+    async def add_server_token(self, server_token):
         async with self.db.cursor() as cursor:
-            await cursor.execute("INSERT INTO game_servers(server_token, ip, port, gotv_port)"
-                                 " VALUES (%s, %s, %s, %s);", (server_token, ip, port, gotv_port))
+            await cursor.execute("INSERT INTO server_tokens(server_token)"
+                                 " VALUES (%s);", (server_token,))
 
-    async def get_gameservers(self):
-        gameservers = []
+    async def get_server_tokens(self):
         async with self.db.cursor() as cursor:
-            await cursor.execute("SELECT * FROM game_servers")
-            for server in await cursor.fetchall():
-                gameservers.append(GameServer(server[0], server[1], server[2], server[3]))
-        return gameservers
+            await cursor.execute("SELECT server_token FROM server_tokens")
+            return [row[0] for row in await cursor.fetchall()]
+
 
     #async def add_users(self, users: Iterable[User]):
     #    async with self.db.cursor() as cursor:
