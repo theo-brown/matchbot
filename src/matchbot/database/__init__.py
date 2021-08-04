@@ -8,19 +8,19 @@ from time import sleep
 
 
 class DatabaseInterface:
-
-    def __init__(self, host, user, password, database_name, port=5432):
+    def __init__(self, host, user, password, database_name, port=5432, timeout=60, refresh_period=1):
         self.host = host
         self.port = int(port)
         self.user = user
         self.password = password
         self.database_name = database_name
         self.db = None
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.init_db())
+        self.timeout = timeout
+        self.refresh_period = refresh_period
 
     async def init_db(self):
-        while not self.db:
+        total_time = 0
+        while not self.db and total_time < self.timeout:
             try:
                 self.db = await aiopg.connect(host=self.host,
                                               port=self.port,
@@ -29,7 +29,8 @@ class DatabaseInterface:
                                               database=self.database_name)
                 print("Connected to database.")
             except OperationalError:
-                sleep(1)
+                print(f"Connection to database failed, retrying in {self.refresh_period}s...")
+                sleep(self.refresh_period)
                 continue
 
     def close(self):
