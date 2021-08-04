@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS team_players (team_id  VARCHAR(32) NOT NULL,
                                          CONSTRAINT unique_player UNIQUE (team_id, steam_id));
 
 CREATE TABLE IF NOT EXISTS game_servers (server_token VARCHAR(32) NOT NULL,
-                                         ip           CIDR        NOT NULL,
+                                         ip           INET        NOT NULL,
                                          port         INTEGER     NOT NULL,
                                          gotv_port    INTEGER     NOT NULL,
                                          PRIMARY KEY (server_token));
