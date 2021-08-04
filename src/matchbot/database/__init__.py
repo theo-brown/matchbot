@@ -18,7 +18,7 @@ class DatabaseInterface:
         self.timeout = timeout
         self.refresh_period = refresh_period
 
-    async def init_db(self):
+    async def connect(self):
         total_time = 0
         while not self.db and total_time < self.timeout:
             try:
@@ -43,7 +43,7 @@ class DatabaseInterface:
             await cursor.execute("INSERT INTO game_servers(server_token, ip, port, gotv_port)"
                                  " VALUES (%s, %s, %s, %s);", (server_token, ip, port, gotv_port))
 
-    async def generate_gameservers(self):
+    async def get_gameservers(self):
         gameservers = []
         async with self.db.cursor() as cursor:
             await cursor.execute("SELECT * FROM game_servers")

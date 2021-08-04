@@ -1,22 +1,28 @@
-from matchbot.gameserver import GameServer, GameServerManager
-from matchbot.database import DatabaseInterface
-
 from os import getenv
 import asyncio
+from matchbot.gameserver import GameServerManager
+from matchbot.database import DatabaseInterface
 
-dbi = DatabaseInterface(host="database",
-                        user=getenv("POSTGRES_USER"),
-                        password=getenv("POSTGRES_PASSWORD"),
-                        database_name=getenv("POSTGRES_DB"))
 
 async def main():
-    await dbi.init_db()
-    await dbi.add_gameserver("asdasd", "192.168.0.1", 27015, 27020)
-    gameservers = await dbi.generate_gameservers()
-    print(gameservers)
-
-if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        dbi = DatabaseInterface(host="database",
+                                user=getenv("POSTGRES_USER"),
+                                password=getenv("POSTGRES_PASSWORD"),
+                                database_name=getenv("POSTGRES_DB"))
+        await dbi.connect()
+
+        gameservers = await dbi.get_gameservers()
+
+        gsm = GameServerManager(gameservers)
+
+        server = gsm.get_available_server()
+
+        print(server.ip, server.port, server.gotv_port, server.token)
+
     finally:
         dbi.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
