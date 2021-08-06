@@ -17,22 +17,26 @@ class Team:
         self.tag = tag
         self.id = id
 
+    @property
     def display_names(self):
         return [player.display_name for player in self.players]
 
+    @property
     def steam_ids(self):
         return [player.steam_id for player in self.players]
 
+    @property
     def discord_ids(self):
         return [player.discord_id for player in self.players]
 
 
 class Match:
-    def __init__(self, team1: Team, team2: Team, maps: Iterable[str], sides: Iterable[str]):
+    def __init__(self, team1: Team, team2: Team, maps: Iterable[str], sides: Iterable[str], id=uuid4().hex, server=None):
         self.teams = [team1, team2]
         self.maps = maps
         self.sides = sides
-        self.id = uuid4().hex
+        self.id = id
+        self.server = server
 
         cvars = {}
         players_per_team = max(len(self.teams[0].players), len(self.teams[1].players))
@@ -43,19 +47,17 @@ class Match:
             cvars["get5_warmup_cfg"] = "warmup_5v5.cfg"
             cvars["get5_live_cfg"] = "live_5v5.cfg"
 
-        self.cfg = {"matchid": self.id,
-                    "num_maps": len(self.maps),
-                    "maplist": self.maps,
-                    "skip_veto": True,
-                    "map_sides": self.sides,
-                    "players_per_team": players_per_team,
-                    "cvars": cvars}
+        self.config = {"matchid": self.id,
+                       "num_maps": len(self.maps),
+                       "maplist": self.maps,
+                       "skip_veto": True,
+                       "map_sides": self.sides,
+                       "players_per_team": players_per_team,
+                       "cvars": cvars}
 
         for i, team in enumerate(self.teams):
-            self.cfg[f"team{i + 1}"] = {"name": team.name,
-                                        "tag": team.tag,
-                                        "players": {player.steam_id: player.display_name for player in team.players}}
+            self.config[f"team{i + 1}"] = {"name": team.name,
+                                           "tag": team.tag,
+                                           "players": dict(zip(team.steam_ids, team.display_names))}
 
-        self.json = json.dumps(self.cfg)
-
-        self.server = None
+        self.config_json = json.dumps(self.config)
