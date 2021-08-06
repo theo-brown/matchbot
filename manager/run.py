@@ -2,6 +2,7 @@ from os import getenv
 import asyncio
 from matchbot.gameserver import GameServer, GameServerManager
 from matchbot.database import DatabaseInterface
+from matchbot import Match, Team
 
 
 async def main():
@@ -23,12 +24,21 @@ async def main():
                                             gotv_port=gotv_ports.pop())
                                             for token in await dbi.get_server_tokens()])
 
-        server = gsm.get_available_server()
+        team1 = Team("TEAM EVOLU",
+                     await dbi.get_users('steam_id', 76561198922288040),
+                     tag="EVL")
+        team2 = Team("Bots",
+                     [],
+                     tag="BOT")
 
-        print(server.ip, server.port, server.gotv_port, server.token)
+        match = Match(team1, team2, maps=["de_dust2", "de_inferno", "de_overpass"],
+                      sides=["team1_ct", "team2_ct", "knife"])
+
+        await gsm.start_match(match)
 
     finally:
         dbi.close()
+        await gsm.stop_all()
 
 
 if __name__ == "__main__":

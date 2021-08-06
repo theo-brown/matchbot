@@ -10,14 +10,16 @@ from matchbot import Match
 
 class GameServer:
     def __init__(self, token, ip, port, gotv_port, id=uuid4().hex):
-        self.token = token
         self.id = id
+        self.token = token
         self.ip = ip
         self.port = port
         self.gotv_port = gotv_port
         self.container = None
         self.rcon = None
         self.match = None
+        self.connect_str = None
+        self.connect_gotv_str = None
 
     async def start(self, docker_instance: aiodocker.docker.Docker, timeout=8):
         if self.match is None:
@@ -38,7 +40,7 @@ class GameServer:
                           f"PASSWORD={self.password}",
                           f"RCON_PASSWORD={self.rcon_password}",
                           f"GOTV_PASSWORD={self.gotv_password}",
-                          f"MATCH_CONFIG={self.match.config}"],
+                          f"MATCH_CONFIG={self.match.config_json}"],
                   "HostConfig": {"NetworkMode": "host"}}
         print("Spawning server...")
         self.container = await docker_instance.containers.run(config=config, name=self.id)
@@ -93,6 +95,7 @@ class GameServerManager:
         if server := self.get_available_server():
             server.match = match
             await server.start(docker_instance=self.docker)
+            return server.connect_str, server.connect_gotv_str
         else:
             raise ValueError("Not enough available servers.")
 
@@ -105,3 +108,7 @@ class GameServerManager:
         server = self.get_server(match_id)
         await server.stop()
         server.match = None
+
+    async def stop_all(self):
+        for server in self.servers:
+            await server.stop()
