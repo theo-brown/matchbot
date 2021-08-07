@@ -11,11 +11,14 @@ class User:
 
 
 class Team:
-    def __init__(self, name: str, players: Iterable[User], tag="", id=uuid4().hex):
+    def __init__(self, name: str, players: Iterable[User] = [], tag="", id=None):
         self.name = name
         self.players = players
         self.tag = tag
-        self.id = id
+        if id:
+            self.id = id
+        else:
+            self.id = uuid4().hex
 
     @property
     def display_names(self):
@@ -31,11 +34,14 @@ class Team:
 
 
 class Match:
-    def __init__(self, team1: Team, team2: Team, maps: Iterable[str], sides: Iterable[str], id=uuid4().hex, server=None):
+    def __init__(self, team1: Team, team2: Team, maps: Iterable[str], sides: Iterable[str], id=None, server=None):
         self.teams = [team1, team2]
         self.maps = maps
         self.sides = sides
-        self.id = id
+        if id:
+            self.id = id
+        else:
+            self.id = uuid4().hex
         self.server = server
 
         cvars = {}

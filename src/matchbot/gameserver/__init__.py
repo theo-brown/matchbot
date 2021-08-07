@@ -9,8 +9,11 @@ from matchbot import Match
 
 
 class GameServer:
-    def __init__(self, token, ip, port, gotv_port, id=uuid4().hex):
-        self.id = id
+    def __init__(self, token, ip, port, gotv_port, id=None):
+        if id:
+            self.id = id
+        else:
+            self.id = uuid4().hex
         self.token = token
         self.ip = ip
         self.port = port
