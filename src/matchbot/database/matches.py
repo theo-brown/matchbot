@@ -2,20 +2,28 @@ from matchbot import Match
 from typing import Union, Iterable
 
 
-class MatchTable:
+class MatchesTable:
     def __init__(self, dbi):
         self.dbi = dbi
 
     async def add(self, *matches: Match):
         await self.dbi.db.executemany("INSERT INTO matches(id, status, live_timestamp, team1_id, team2_id)"
-                                      " VALUES ($1, $2, $3, $4, $5, $6)"
-                                      " ON CONFLICT (id) DO UPDATE"
-                                      " SET status = excluded.status,"
-                                          " live_timestamp = excluded.live_timestamp,"
-                                          " team1_id = excluded.team1_id,"
-                                          " team2_id = excluded.team2_id;",
-                                      [(match.id, match.status, match.live_timestamp,
-                                        match.server_id, match.team1_id, match.team2_id)
+                                      " VALUES ($1, $2, $3, $4, $5);",
+                                      [(match.id, match.status, match.live_timestamp, match.teams[0].id, match.teams[1].id)
+                                       for match in matches])
+
+        await self.dbi.db.executemany("INSERT INTO match_maps(match_id, map_number, map_id, side)"
+                                      " VALUES ($1, $2, $3, $4);",
+                                      [(match.id, i+1, map, side)
+                                       for match in matches
+                                       for i, (map, side) in enumerate(zip(match.maps, match.sides))])
+
+    async def update(self, *matches: Match):
+        #TODO: add update to match_maps as well
+        await self.dbi.db.executemany("UPDATE matches"
+                                      " SET status = $2, live_timestamp = $3, team1_id = $4, team2_id = $5"
+                                      " WHERE id = $1;",
+                                      [(match.id, match.status, match.live_timestamp, match.teams[0].id, match.teams[1].id)
                                        for match in matches])
 
     async def get(self, column: str, *values) -> Union[Match, Iterable[Match]]:
@@ -34,7 +42,8 @@ class MatchTable:
                     f" WHERE {column} = ANY ($1);")
         for match_record in await self.dbi.db.fetch(query, values):
             team1, team2 = await self.dbi.teams.get_by_id(match_record.get('team1_id'), match_record.get('team2_id'))
-            map_records = await self.dbi.db.fetch("SELECT map_id, side FROM match_maps WHERE match_id = ($1)")
+            map_records = await self.dbi.db.fetch("SELECT map_id, side FROM match_maps WHERE match_id = $1",
+                                                  match_record.get('id'))
             matches.append(Match(team1=team1,
                                  team2=team2,
                                  maps=[map_record.get('map_id') for map_record in map_records],
