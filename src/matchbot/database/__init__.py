@@ -1,8 +1,8 @@
 import asyncpg
-from matchbot.database.servertokens import ServerTokensTable
+from matchbot.database.servers import ServersTable, ServerTokensTable
 from matchbot.database.users import UsersTable
 from matchbot.database.teams import TeamsTable
-from matchbot.database.matches import MatchTable
+from matchbot.database.matches import MatchesTable
 from typing import Callable
 
 
@@ -15,24 +15,28 @@ class DatabaseInterface:
         self.database_name = database_name
         self.db = None
         self.timeout = timeout
-        self.servertokens = None
+        self.servers = None
         self.users = None
         self.teams = None
         self.matches = None
 
     async def connect(self):
-        self.db = await asyncpg.connect(host=self.host,
-                                        port=self.port,
-                                        user=self.user,
-                                        password=self.password,
-                                        database=self.database_name,
-                                        timeout=self.timeout)
+        while not self.db:
+            try:
+                self.db = await asyncpg.connect(host=self.host,
+                                                port=self.port,
+                                                user=self.user,
+                                                password=self.password,
+                                                database=self.database_name,
+                                                timeout=self.timeout)
+            except:
+                print("An exception occurred; retrying...")
 
         self.servertokens = ServerTokensTable(self)
         self.servers = ServersTable(self)
         self.users = UsersTable(self)
         self.teams = TeamsTable(self)
-        self.matches = MatchTable(self)
+        self.matches = MatchesTable(self)
 
     async def close(self):
         await self.db.close()
