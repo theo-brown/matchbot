@@ -2,6 +2,7 @@ import asyncpg
 from matchbot.database.servertokens import ServerTokensTable
 from matchbot.database.users import UsersTable
 from matchbot.database.teams import TeamsTable
+from matchbot.database.matches import MatchTable
 
 class DatabaseInterface:
     def __init__(self, host, user, password, database_name, port=5432, timeout=60):
@@ -21,9 +22,10 @@ class DatabaseInterface:
                                         database=self.database_name,
                                         timeout=self.timeout)
 
-        self.servertokens = ServerTokensTable(self.db)
-        self.users = UsersTable(self.db)
-        self.teams = TeamsTable(self.db)
+        self.servertokens = ServerTokensTable(self)
+        self.users = UsersTable(self)
+        self.teams = TeamsTable(self)
+        self.matches = MatchTable(self)
 
     async def close(self):
         await self.db.close()

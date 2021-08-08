@@ -1,6 +1,13 @@
 from typing import Iterable
 from uuid import uuid4
 import json
+from datetime import datetime
+
+# Global constants for match status
+MATCH_SCHEDULED = 0
+MATCH_QUEUED = 1
+MATCH_LIVE = 2
+MATCH_FINISHED = 3
 
 
 class User:
@@ -34,7 +41,13 @@ class Team:
 
 
 class Match:
-    def __init__(self, team1: Team, team2: Team, maps: Iterable[str], sides: Iterable[str], id=None, server=None):
+    global MATCH_SCHEDULED
+    global MATCH_QUEUED
+    global MATCH_LIVE
+    global MATCH_FINISHED
+
+    def __init__(self, team1: Team, team2: Team, maps: Iterable[str], sides: Iterable[str],
+                 id=None, live_timestamp=None, status=None):
         self.teams = [team1, team2]
         self.maps = maps
         self.sides = sides
@@ -42,7 +55,14 @@ class Match:
             self.id = id
         else:
             self.id = uuid4().hex
-        self.server = server
+        if live_timestamp:
+            self.live_timestamp = live_timestamp
+        else:
+            self.live_timestamp = datetime.now()
+        if status is not None:
+            self.status = status
+        else:
+            status = MATCH_SCHEDULED
 
         cvars = {}
         players_per_team = max(len(self.teams[0].players), len(self.teams[1].players))

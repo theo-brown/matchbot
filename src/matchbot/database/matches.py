@@ -1,5 +1,4 @@
 from matchbot import Match
-from matchbot.database import DatabaseInterface
 from typing import Union, Iterable
 
 
