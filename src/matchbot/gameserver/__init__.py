@@ -33,7 +33,7 @@ class GameServer:
         self.rcon_password = token_urlsafe(6)
         self.gotv_password = token_urlsafe(6)
 
-    async def start(self, docker_instance: aiodocker.docker.Docker, timeout=8):
+    async def start(self, docker_instance: aiodocker.docker.Docker):
         if not self.is_assigned:
             raise ValueError("No match loaded.")
 
@@ -49,28 +49,34 @@ class GameServer:
         print("Spawning server...")
         self.container = await docker_instance.containers.run(config=config, name=self.id)
         await self.container.start()
-        print("Establishing RCON connection...")
-        start_time = time()
-        duration = 0
-        while duration < timeout:
-            duration = time() - start_time
-            try:
-                self.rcon = await aiorcon.RCON.create(self.ip, self.port, self.rcon_password,
-                                                      loop=asyncio.get_event_loop())
-            except OSError as e:
-                #print(f"RCON connection failed with error {e}\n"
-                #      f"Retrying ({duration:.2f}s)...")
-                continue
-            except Exception as e:
-                await self.stop()
-                raise e
-            else:
-                break
-        if duration >= timeout:
-            await self.stop()
-            raise OSError(f"RCON connection failed after {duration:.2f}s")
+        await self.connect_rcon()
+
+    async def connect_rcon(self, timeout=5):
+        if self.rcon:
+            return self.rcon
         else:
-            print(f"RCON connection established after {duration:.2f}s.")
+            print("Establishing RCON connection...")
+            start_time = time()
+            duration = 0
+            while duration < timeout:
+                duration = time() - start_time
+                try:
+                    self.rcon = await aiorcon.RCON.create(self.ip, self.port, self.rcon_password,
+                                                          loop=asyncio.get_event_loop())
+                except OSError as e:
+                    #print(f"RCON connection failed with error {e}\n"
+                    #      f"Retrying ({duration:.2f}s)...")
+                    continue
+                except Exception as e:
+                    await self.stop()
+                    raise e
+                else:
+                    break
+            if duration >= timeout:
+                raise OSError(f"RCON connection failed after {duration:.2f}s")
+            else:
+                print(f"RCON connection established after {duration:.2f}s.")
+                return self.rcon
 
     async def stop(self):
         if isinstance(self.rcon, aiorcon.RCON):
