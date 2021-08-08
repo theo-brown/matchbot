@@ -6,10 +6,11 @@ from matchbot.database import DatabaseInterface
 
 class Manager:
     def __init__(self):
-        pass
+        self.dbi = None
+        self.gsm = None
 
     async def start(self):
-        self.dbi = DatabaseInterface(host="database",
+        self.dbi = DatabaseInterface(host=getenv("POSTGRES_HOST"),
                                      user=getenv("POSTGRES_USER"),
                                      password=getenv("POSTGRES_PASSWORD"),
                                      database_name=getenv("POSTGRES_DB"))

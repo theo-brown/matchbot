@@ -22,6 +22,7 @@ services:
       - database
     environment:
       - PUBLIC_IP
+      - POSTGRES_HOST = 'database'
       - POSTGRES_USER
       - POSTGRES_PASSWORD
       - POSTGRES_DB
