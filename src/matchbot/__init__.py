@@ -63,7 +63,7 @@ class Match:
         if status is not None:
             self.status = status
         else:
-            status = MATCH_SCHEDULED
+            self.status = MATCH_SCHEDULED
 
         cvars = {}
         players_per_team = max(len(self.teams[0].players), len(self.teams[1].players))
