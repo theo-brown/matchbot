@@ -1,4 +1,5 @@
 from matchbot import Team, User, Match
+from matchbot.manager import Manager
 
 from random import randint
 
@@ -22,3 +23,6 @@ team2 = Team("Natus Vincere",
                      tag="NAVI")
 
 match = Match(team1, team2, maps=["de_dust2", "de_inferno", "de_overpass"], sides=["team1_ct", "team2_ct", "knife"])
+
+m = Manager()
+players = team1.players + team2.players
