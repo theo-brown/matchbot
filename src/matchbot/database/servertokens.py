@@ -1,6 +1,7 @@
 from asyncpg import Connection
 from typing import Iterable
 
+
 class ServerTokensTable:
     def __init__(self, dbi):
         self.dbi = dbi

@@ -4,6 +4,7 @@ from matchbot.database.users import UsersTable
 from matchbot.database.teams import TeamsTable
 from matchbot.database.matches import MatchTable
 
+
 class DatabaseInterface:
     def __init__(self, host, user, password, database_name, port=5432, timeout=60):
         self.host = host
