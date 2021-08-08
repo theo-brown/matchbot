@@ -12,8 +12,9 @@ class TeamsTable:
                                       [(team.id, team.name, team.tag) for team in teams])
         await self.dbi.db.executemany("INSERT INTO team_players(team_id, steam_id)"
                                       " VALUES ($1, $2)",
-                                      [(team.id, steam_id) for steam_id in team.steam_ids
-                                                           for team in teams])
+                                      [(team.id, steam_id)
+                                       for team in teams
+                                       for steam_id in team.steam_ids])
 
     async def get(self, column: str, *values) -> Union[Team, Iterable[Team]]:
         if column not in ['id', 'name', 'tag']:
