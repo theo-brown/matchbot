@@ -3,6 +3,7 @@ from matchbot.database.servertokens import ServerTokensTable
 from matchbot.database.users import UsersTable
 from matchbot.database.teams import TeamsTable
 from matchbot.database.matches import MatchTable
+from typing import Callable
 
 
 class DatabaseInterface:
@@ -14,6 +15,10 @@ class DatabaseInterface:
         self.database_name = database_name
         self.db = None
         self.timeout = timeout
+        self.servertokens = None
+        self.users = None
+        self.teams = None
+        self.matches = None
 
     async def connect(self):
         self.db = await asyncpg.connect(host=self.host,
@@ -33,3 +38,5 @@ class DatabaseInterface:
         del self.db
         self.db = None
 
+    async def add_listener(self, channel: str, callback: Callable[[str], None]):
+        await self.db.add_listener(channel, lambda connection, pid, channel, payload: callback(payload))
