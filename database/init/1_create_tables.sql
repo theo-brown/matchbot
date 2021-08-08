@@ -46,3 +46,13 @@ CREATE TABLE IF NOT EXISTS match_maps (match_id VARCHAR(32) NOT NULL REFERENCES 
                                        side     VARCHAR(32) NOT NULL,
                                        PRIMARY KEY (match_id, map_id));
 
+CREATE TABLE IF NOT EXISTS servers (id            VARCHAR(32) NOT NULL UNIQUE,
+                                    token         VARCHAR(32) NOT NULL UNIQUE,
+                                    ip            INET,
+                                    port          INTEGER     UNIQUE,
+                                    gotv_port     INTEGER     UNIQUE,
+                                    password      VARCHAR(32) DEFAULT NULL,
+                                    gotv_password VARCHAR(32) DEFAULT NULL,
+                                    rcon_password VARCHAR(32) DEFAULT NULL,
+                                    match_id      VARCHAR(32) DEFAULT NULL REFERENCES matches(id),
+                                    PRIMARY KEY (id));

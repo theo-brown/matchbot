@@ -9,7 +9,8 @@ from matchbot import Match
 
 
 class GameServer:
-    def __init__(self, token, ip, port, gotv_port, id=None):
+    def __init__(self, token, ip, port, gotv_port, id=None, match=None,
+                 password=None, gotv_password=None, rcon_password=None):
         if id:
             self.id = id
         else:
@@ -20,21 +21,21 @@ class GameServer:
         self.gotv_port = gotv_port
         self.container = None
         self.rcon = None
-        self.match = None
-        self.connect_str = None
-        self.connect_gotv_str = None
+        self.match = match
+        self.password = password
+        self.rcon_password = rcon_password
+        self.gotv_password = gotv_password
 
-    async def start(self, docker_instance: aiodocker.docker.Docker, timeout=8):
-        if self.match is None:
-            raise ValueError("No match loaded.")
-
+    def assign(self, match: Match):
+        self.match = match
         # Generate passwords
         self.password = token_urlsafe(6)
         self.rcon_password = token_urlsafe(6)
         self.gotv_password = token_urlsafe(6)
 
-        self.connect_str = f"connect {self.ip}:{self.port}; password {self.password}"
-        self.connect_gotv_str = f"connect {self.ip}:{self.gotv_port}; password {self.gotv_password}"
+    async def start(self, docker_instance: aiodocker.docker.Docker, timeout=8):
+        if not self.is_assigned:
+            raise ValueError("No match loaded.")
 
         config = {"Image": "theobrown/csgo-docker:latest",
                   "Env": [f"SERVER_TOKEN={self.token}",
@@ -83,35 +84,16 @@ class GameServer:
     def is_assigned(self) -> bool:
         return bool(self.match)
 
-
-class GameServerManager:
-    def __init__(self, servers: Iterable[GameServer]):
-        self.docker = aiodocker.Docker()
-        self.servers = list(servers)
-
-    def get_available_server(self) -> Optional[GameServer]:
-        for server in self.servers:
-            if not server.is_assigned:
-                return server
-
-    async def start_match(self, match: Match):
-        if server := self.get_available_server():
-            server.match = match
-            await server.start(docker_instance=self.docker)
-            return server.connect_str, server.connect_gotv_str
+    @property
+    def connect_str(self) -> Optional[str]:
+        if self.password and self.is_assigned:
+            return f"connect {self.ip}:{self.port}; password {self.password}"
         else:
-            raise ValueError("Not enough available servers.")
+            return None
 
-    def get_server(self, match_id: str) -> GameServer:
-        for server in self.servers:
-            if server.match.id == match_id:
-                return server
-
-    async def delete_match(self, match_id):
-        server = self.get_server(match_id)
-        await server.stop()
-        server.match = None
-
-    async def stop_all(self):
-        for server in self.servers:
-            await server.stop()
+    @property
+    def connect_gotv_str(self) -> Optional[str]:
+        if self.gotv_password and self.is_assigned:
+            return f"connect {self.ip}:{self.gotv_port}; password {self.gotv_password}"
+        else:
+            return None

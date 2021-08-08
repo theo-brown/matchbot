@@ -29,6 +29,7 @@ class DatabaseInterface:
                                         timeout=self.timeout)
 
         self.servertokens = ServerTokensTable(self)
+        self.servers = ServersTable(self)
         self.users = UsersTable(self)
         self.teams = TeamsTable(self)
         self.matches = MatchTable(self)
