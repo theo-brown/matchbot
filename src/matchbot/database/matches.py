@@ -1,9 +1,10 @@
-from matchbot import Match
+from __future__ import annotations
+from matchbot import Match, MATCH_INITIALISING
 from typing import Union, Iterable
 
 
 class MatchesTable:
-    def __init__(self, dbi):
+    def __init__(self, dbi: DatabaseInterface):
         self.dbi = dbi
 
     async def add(self, *matches: Match):

@@ -1,9 +1,10 @@
+from __future__ import annotations
 from typing import Iterable, Union
 from matchbot import Team, User
 
 
 class TeamsTable:
-    def __init__(self, dbi):
+    def __init__(self, dbi: DatabaseInterface):
         self.dbi = dbi
 
     async def add(self, *teams: Team):

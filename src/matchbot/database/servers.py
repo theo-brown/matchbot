@@ -1,10 +1,10 @@
-from asyncpg import Connection
-from typing import Iterable, Union
+from __future__ import annotations
+from typing import Iterable, Union, Tuple
 from matchbot.gameserver import GameServer
 
 
 class ServerTokensTable:
-    def __init__(self, dbi):
+    def __init__(self, dbi: DatabaseInterface):
         self.dbi = dbi
 
     async def add(self, *tokens: str):
@@ -17,7 +17,7 @@ class ServerTokensTable:
 
 
 class ServersTable:
-    def __init__(self, dbi):
+    def __init__(self, dbi: DatabaseInterface):
         self.dbi = dbi
 
     async def add(self, *servers: GameServer):
