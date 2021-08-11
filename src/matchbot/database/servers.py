@@ -83,3 +83,15 @@ class ServersTable:
                           ip=str(record.get('ip')),
                           port=record.get('port'),
                           gotv_port=record.get('gotv_port'))
+
+    async def get_by_match_id(self, *match_ids: str):
+        return await self.get('match_id', match_ids)
+
+    async def assign(self, server: GameServer, match: Match):
+        server.assign(match)
+        await self.update(server)
+
+    async def assign_many(self, servers_matches: Iterable[Tuple[GameServer, Match]]):
+        for server, match in servers_matches:
+            server.assign(match)
+        await self.update([server for server, match in servers_matches])
