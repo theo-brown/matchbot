@@ -18,7 +18,8 @@ class Manager:
         self.dbi = DatabaseInterface(host=getenv("POSTGRES_HOST"),
                                      user=getenv("POSTGRES_USER"),
                                      password=getenv("POSTGRES_PASSWORD"),
-                                     database_name=getenv("POSTGRES_DB"))
+                                     database_name=getenv("POSTGRES_DB"),
+                                     port=int(getenv("POSTGRES_PORT")))
         await self.dbi.connect()
 
         await self.dbi.add_listener('match_status', self.on_match_status_change)

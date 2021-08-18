@@ -1,11 +1,14 @@
 from matchbot import Team, User, Match, MATCH_INITIALISING
 from matchbot.manager import Manager
 import asyncio
-
 from random import randint
+from dotenv import load_dotenv
+from os import getenv
 
 def fake_steamid():
     return randint(1e17, 1e18)
+
+load_dotenv("../../.env")
 
 m = Manager()
 

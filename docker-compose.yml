@@ -4,8 +4,11 @@ services:
   database:
     image: "postgres:alpine"
     restart: always
+    # Set the database to use POSTGRES_PORT
+    command: -p ${POSTGRES_PORT}
+    # Forward from POSTGRES_PORT on the host to POSTGRES_PORT on the container
     ports:
-    - 5432:5432
+    - ${POSTGRES_PORT}:${POSTGRES_PORT}
     environment:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
@@ -14,28 +17,28 @@ services:
       - database:/var/lib/postgresql/data
       - ./database/init:/docker-entrypoint-initdb.d
 
-  manager:
-    build:
-      context: .
-      dockerfile: manager/Dockerfile
-    depends_on:
-      - database
-    environment:
-      - PUBLIC_IP
-      - POSTGRES_HOST = 'database'
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_DB
-      - PORT_MIN
-      - PORT_MAX
-      - GOTV_PORT_MIN
-      - GOTV_PORT_MAX
-    ports:
-    - "$PORT_MIN-$PORT_MAX:$PORT_MIN-$PORT_MAX/tcp"
-    - "$PORT_MIN-$PORT_MAX:$PORT_MIN-$PORT_MAX/udp"
-    - "$GOTV_PORT_MIN-$GOTV_PORT_MAX:$GOTV_PORT_MIN-$GOTV_PORT_MAX/udp"
-    volumes:
-     - /var/run/docker.sock:/var/run/docker.sock
+#  manager:
+#    build:
+#      context: .
+#      dockerfile: manager/Dockerfile
+#    depends_on:
+#      - database
+#    environment:
+#      - PUBLIC_IP
+#      - POSTGRES_HOST = 'database'
+#      - POSTGRES_USER
+#      - POSTGRES_PASSWORD
+#      - POSTGRES_DB
+#      - PORT_MIN
+#      - PORT_MAX
+#      - GOTV_PORT_MIN
+#      - GOTV_PORT_MAX
+#    ports:
+#    - "$PORT_MIN-$PORT_MAX:$PORT_MIN-$PORT_MAX/tcp"
+#    - "$PORT_MIN-$PORT_MAX:$PORT_MIN-$PORT_MAX/udp"
+#    - "$GOTV_PORT_MIN-$GOTV_PORT_MAX:$GOTV_PORT_MIN-$GOTV_PORT_MAX/udp"
+#    volumes:
+#     - /var/run/docker.sock:/var/run/docker.sock
 
 #  discord:
 #    build: discord
