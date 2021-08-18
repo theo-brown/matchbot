@@ -3,7 +3,7 @@ from matchbot.database.servers import ServersTable, ServerTokensTable
 from matchbot.database.users import UsersTable
 from matchbot.database.teams import TeamsTable
 from matchbot.database.matches import MatchesTable
-from typing import Callable
+from typing import Callable, Coroutine, Union
 
 
 class DatabaseInterface:
@@ -19,6 +19,7 @@ class DatabaseInterface:
         self.users = None
         self.teams = None
         self.matches = None
+        self.listeners = []
 
     async def connect(self):
         while not self.pool:
@@ -39,10 +40,12 @@ class DatabaseInterface:
         self.matches = MatchesTable(self)
 
     async def close(self):
-        await self.db.close()
-        del self.db
+        for listener in self.listeners:
+            await listener['connection'].remove_listener(listener['channel'], listener['callback'])
         await self.pool.close()
         self.pool = None
 
-    async def add_listener(self, channel: str, callback: Callable[[str], None]):
-        await self.db.add_listener(channel, lambda connection, pid, channel, payload: callback(payload))
+    async def add_listener(self, channel: str, callback: Union[Coroutine, Callable]):
+        con = await self.pool.acquire()
+        await con.add_listener(channel, callback)
+        self.listeners.append({'connection': con, 'channel': channel, 'callback': callback})

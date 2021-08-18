@@ -1,8 +1,12 @@
 from os import getenv
 import aiodocker
+from asyncpg import Connection
 from matchbot.gameserver import GameServer
 from matchbot.database import DatabaseInterface
-from matchbot import MATCH_LIVE, MATCH_FINISHED
+from matchbot import MATCH_INITIALISING, MATCH_LIVE, MATCH_FINISHED
+import json
+import asyncio
+import datetime
 
 
 class Manager:
@@ -17,13 +21,14 @@ class Manager:
                                      database_name=getenv("POSTGRES_DB"))
         await self.dbi.connect()
 
-        await self.dbi.add_listener('new_match', self.on_new_match)
+        await self.dbi.add_listener('match_status', self.on_match_status_change)
 
         ports = [i for i in range(int(getenv("PORT_MIN")),
                                   int(getenv("PORT_MAX")) + 1)]
         gotv_ports = [i for i in range(int(getenv("GOTV_PORT_MIN")),
                                        int(getenv("GOTV_PORT_MAX")) + 1)]
 
+        await self.dbi.servertokens.add('A')
         tokens = await self.dbi.servertokens.get()
 
         if len(ports) != len(gotv_ports):
@@ -47,11 +52,11 @@ class Manager:
         await self.dbi.close()
         #TODO: also stop all running servers
 
-    async def on_new_match(self, match_id: str):
-        match = await self.dbi.matches.get_by_id(match_id)
-        server = await self.dbi.servers.get_available()
-        server.assign(match)
-        await self.dbi.servers.update(server)
-        await server.start(self.docker)
-        match.status = MATCH_LIVE
-        await self.dbi.matches.update(match)
+    async def on_match_status_change(self, connection: Connection, pid: int, channel: str, payload: str):
+        payload = json.loads(payload)
+        if payload['status'] == MATCH_INITIALISING:
+            match = await self.dbi.matches.get_by_id(payload['id'])
+            server = await self.dbi.servers.get_available()
+            await self.dbi.servers.assign(server, match)
+            await server.start(self.docker)
+            await self.dbi.matches.set_as_live(match)
