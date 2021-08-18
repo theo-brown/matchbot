@@ -4,10 +4,11 @@ from matchbot.database.users import UsersTable
 from matchbot.database.teams import TeamsTable
 from matchbot.database.matches import MatchesTable
 from typing import Callable, Coroutine, Union
+from time import time
 
 
 class DatabaseInterface:
-    def __init__(self, host, user, password, database_name, port=5432, timeout=60):
+    def __init__(self, host, user, password, database_name, port=5432, timeout=5):
         self.host = host
         self.port = int(port)
         self.user = user
@@ -22,7 +23,8 @@ class DatabaseInterface:
         self.listeners = []
 
     async def connect(self):
-        while not self.pool:
+        start_time = time()
+        while not self.pool and time() - start_time < self.timeout:
             try:
                 self.pool = await asyncpg.create_pool(host=self.host,
                                                       port=self.port,
@@ -30,8 +32,11 @@ class DatabaseInterface:
                                                       password=self.password,
                                                       database=self.database_name,
                                                       timeout=self.timeout)
-            except:
-                print("An exception occurred in establishing a connection to the database; retrying...")
+            except ConnectionRefusedError:
+                continue
+
+        if not self.pool:
+            raise TimeoutError("Connection to database timed out.")
 
         self.servertokens = ServerTokensTable(self)
         self.servers = ServersTable(self)
