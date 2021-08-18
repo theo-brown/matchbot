@@ -16,6 +16,11 @@ class User:
         self.display_name = display_name
         self.discord_id = discord_id
 
+    def __str__(self):
+        return ("User:\n"
+                f"\tSteam ID: {self.steam_id}\n"
+                f"\tDiscord ID: {self.discord_id}\n"
+                f"\tDisplay name: {self.display_name}")
 
 class Team:
     def __init__(self, name: str, players: Iterable[User] = [], tag="", id=None):
@@ -38,6 +43,13 @@ class Team:
     @property
     def discord_ids(self):
         return [player.discord_id for player in self.players]
+
+    def __str__(self):
+        return ("Team:\n"
+                f"\tID: {self.id}\n"
+                f"\tName: {self.name}\n"
+                f"\tTag: {self.tag}\n"
+                f"\tPlayers: {self.display_names}")
 
 
 class Match:
@@ -93,6 +105,19 @@ class Match:
                                            "players": dict(zip(team.steam_ids, team.display_names))}
 
         self.config_json = json.dumps(self.config)
+
+    def __str__(self):
+        maps_sides_str = "\n".join(map_str for map_str in [f"\t\t{map_name}: {side}"
+                                                            for map_name, side in zip(self.maps, self.sides)])
+        return ("Match:\n"
+                f"\tID: {self.id}\n"
+                f"\tStatus: {self.status}\n"
+                f"\tTeam 1: {self.teams[0].id} {self.teams[0].name}\n"
+                f"\tTeam 2: {self.teams[1].id} {self.teams[1].name}\n"
+                f"\tMaps:\n {maps_sides_str}\n"
+                f"\tCreated at: {self.created_timestamp}\n"
+                f"\tLive at: {self.live_timestamp}\n"
+                f"\tFinished at: {self.finished_timestamp}\n")
 
     def set_as_live(self):
         self.status = MATCH_LIVE

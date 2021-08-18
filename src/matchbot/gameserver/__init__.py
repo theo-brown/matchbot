@@ -26,6 +26,16 @@ class GameServer:
         self.rcon_password = rcon_password
         self.gotv_password = gotv_password
 
+    def __str__(self):
+        return (f"GameServer:\n"
+                f"\tID: {self.id}\n"
+                f"\tToken: {self.token}\n"
+                f"\tIP: {self.ip}\n"
+                f"\tPort: {self.port}\n"
+                f"\tGOTV Port: {self.gotv_port}\n"
+                f"\tContainer: {self.container.id if self.container else None}\n"
+                f"\tMatch: {self.match.id if self.is_assigned else None}\n")
+
     def assign(self, match: Optional[Match]):
         if match:
             self.match = match
