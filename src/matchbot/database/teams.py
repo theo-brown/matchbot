@@ -8,14 +8,15 @@ class TeamsTable:
         self.dbi = dbi
 
     async def add(self, *teams: Team):
-        await self.dbi.db.executemany("INSERT INTO teams(id, name, tag)"
-                                      " VALUES ($1, $2, $3)",
-                                      [(team.id, team.name, team.tag) for team in teams])
-        await self.dbi.db.executemany("INSERT INTO team_players(team_id, steam_id)"
-                                      " VALUES ($1, $2)",
-                                      [(team.id, steam_id)
-                                       for team in teams
-                                       for steam_id in team.steam_ids])
+        async with self.dbi.pool.acquire() as connection:
+            await connection.executemany("INSERT INTO teams(id, name, tag)"
+                                          " VALUES ($1, $2, $3)",
+                                            [(team.id, team.name, team.tag) for team in teams])
+            await connection.executemany("INSERT INTO team_players(team_id, steam_id)"
+                                          " VALUES ($1, $2)",
+                                            [(team.id, steam_id)
+                                           for team in teams
+                                           for steam_id in team.steam_ids])
 
     async def get(self, column: str, *values) -> Union[Team, Iterable[Team]]:
         if column not in ['id', 'name', 'tag']:
@@ -24,7 +25,7 @@ class TeamsTable:
         teams = [Team(name=record.get('name'),
                       tag=record.get('tag'),
                       id=record.get('id'))
-                 for record in await self.dbi.db.fetch("SELECT id, name, tag"
+                 for record in await self.dbi.pool.fetch("SELECT id, name, tag"
                                                        " FROM teams"
                                                        f" WHERE {column} = ANY ($1);", values)]
         for team in teams:
@@ -32,7 +33,7 @@ class TeamsTable:
                                  discord_id=record.get('discord_id'),
                                  display_name=record.get('display_name'))
                             for record in
-                            await self.dbi.db.fetch("SELECT steam_id, discord_id, display_name"
+                            await self.dbi.pool.fetch("SELECT steam_id, discord_id, display_name"
                                                     " FROM users"
                                                     " WHERE steam_id = ANY (SELECT steam_id"
                                                                            " FROM team_players"

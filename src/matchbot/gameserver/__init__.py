@@ -26,12 +26,18 @@ class GameServer:
         self.rcon_password = rcon_password
         self.gotv_password = gotv_password
 
-    def assign(self, match: Match):
-        self.match = match
-        # Generate passwords
-        self.password = token_urlsafe(6)
-        self.rcon_password = token_urlsafe(6)
-        self.gotv_password = token_urlsafe(6)
+    def assign(self, match: Optional[Match]):
+        if match:
+            self.match = match
+            # Generate passwords
+            self.password = token_urlsafe(6)
+            self.rcon_password = token_urlsafe(6)
+            self.gotv_password = token_urlsafe(6)
+        else:
+            self.match = None
+            self.password = None
+            self.rcon_password = None
+            self.gotv_password = None
 
     async def start(self, docker_instance: aiodocker.docker.Docker):
         if not self.is_assigned:

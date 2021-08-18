@@ -8,7 +8,7 @@ class UsersTable:
         self.dbi = dbi
 
     async def add(self, *users: User):
-        await self.dbi.db.executemany("INSERT INTO users(steam_id, discord_id, display_name)"
+        await self.dbi.pool.executemany("INSERT INTO users(steam_id, discord_id, display_name)"
                                       " VALUES ($1, $2, $3)"
                                       " ON CONFLICT (steam_id) DO UPDATE"
                                       " SET discord_id = excluded.discord_id,"
@@ -23,7 +23,7 @@ class UsersTable:
         users = [User(steam_id=record.get('steam_id'),
                       discord_id=record.get('discord_id'),
                       display_name=record.get('display_name'))
-                 for record in await self.dbi.db.fetch("SELECT steam_id, discord_id, display_name FROM users"
+                 for record in await self.dbi.pool.fetch("SELECT steam_id, discord_id, display_name FROM users"
                                                        f" WHERE {column} = ANY ($1);", values)]
         if len(values) == 1:
             if len(users) == 1:

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Iterable, Union, Tuple
+from typing import Iterable, Union, Tuple, Optional
 from matchbot.gameserver import GameServer
 
 
@@ -8,12 +8,13 @@ class ServerTokensTable:
         self.dbi = dbi
 
     async def add(self, *tokens: str):
-        await self.dbi.db.executemany("INSERT INTO server_tokens(token)"
-                                      " VALUES ($1);", tokens)
+        await self.dbi.pool.executemany("INSERT INTO server_tokens(token)"
+                                        " VALUES ($1)"
+                                        " ON CONFLICT DO NOTHING;", tokens)
 
     async def get(self) -> Iterable[str]:
         return [record.get('token')
-                for record in await self.dbi.db.fetch("SELECT token FROM server_tokens")]
+                for record in await self.dbi.pool.fetch("SELECT token FROM server_tokens")]
 
 
 class ServersTable:
@@ -21,7 +22,7 @@ class ServersTable:
         self.dbi = dbi
 
     async def add(self, *servers: GameServer):
-        await self.dbi.db.executemany("INSERT INTO servers(id, token, ip, port, gotv_port, password,"
+        await self.dbi.pool.executemany("INSERT INTO servers(id, token, ip, port, gotv_port, password,"
                                                          " gotv_password, rcon_password, match_id)"
                                       " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
                                       " ON CONFLICT (token) DO UPDATE"
@@ -33,17 +34,17 @@ class ServersTable:
                                           " gotv_password = excluded.gotv_password,"
                                           " rcon_password = excluded.rcon_password,"
                                           " match_id = excluded.match_id;",
-                                      [(server.id, server.token, server.ip, server.port, server.gotv_port,
+                                        [(server.id, server.token, server.ip, server.port, server.gotv_port,
                                         server.password, server.gotv_password, server.rcon_password,
                                         server.match.id if server.is_assigned else None)
                                        for server in servers])
 
     async def update(self, *servers: GameServer):
-        await self.dbi.db.executemany("UPDATE servers"
+        await self.dbi.pool.executemany("UPDATE servers"
                                       " SET ip = $2, port = $3, gotv_port = $4, password = $5,"
                                       " gotv_password = $6, rcon_password = $7, match_id = $8"
                                       " WHERE id = $1;",
-                                      [(server.id, server.ip, server.port, server.gotv_port,
+                                        [(server.id, server.ip, server.port, server.gotv_port,
                                         server.password, server.gotv_password, server.rcon_password,
                                         server.match.id if server.is_assigned else None)
                                        for server in servers])
@@ -61,8 +62,9 @@ class ServersTable:
                               gotv_password=record.get('gotv_password'),
                               rcon_password=record.get('rcon_password'),
                               match=await self.dbi.matches.get_by_id(record.get('match_id')))
-                   for record in await self.dbi.db.fetch("SELECT id, token, ip, port, gotv_port, password,"
-                                                         " gotv_password, rcon_password, match_id FROM servers")]
+                   for record in await self.dbi.pool.fetch("SELECT id, token, ip, port, gotv_port, password,"
+                                                         " gotv_password, rcon_password, match_id FROM servers"
+                                                           f"WHERE {column} = ANY ($1)", values)]
 
         if len(values) == 1:
             if len(servers) == 1:
@@ -75,7 +77,7 @@ class ServersTable:
             return servers
 
     async def get_available(self):
-        record = await self.dbi.db.fetchrow("SELECT id, token, ip, port, gotv_port FROM servers"
+        record = await self.dbi.pool.fetchrow("SELECT id, token, ip, port, gotv_port FROM servers"
                                             " WHERE match_id is NULL;")
 
         return GameServer(id=record.get('id'),
@@ -87,7 +89,7 @@ class ServersTable:
     async def get_by_match_id(self, *match_ids: str):
         return await self.get('match_id', match_ids)
 
-    async def assign(self, server: GameServer, match: Match):
+    async def assign(self, server: GameServer, match: Optional[Match]):
         server.assign(match)
         await self.update(server)
 

@@ -1,14 +1,13 @@
-from typing import Iterable
+from typing import Iterable, Optional
 from uuid import uuid4
 import json
-from datetime import datetime
-
+import datetime
 
 # Global constants for match status
-MATCH_SCHEDULED = 0
-MATCH_QUEUED = 1
-MATCH_LIVE = 2
-MATCH_FINISHED = 3
+MATCH_CREATED = 'CREATED'
+MATCH_INITIALISING = 'INITIALISING'
+MATCH_LIVE = 'LIVE'
+MATCH_FINISHED = 'FINISHED'
 
 
 class User:
@@ -42,13 +41,16 @@ class Team:
 
 
 class Match:
-    global MATCH_SCHEDULED
-    global MATCH_QUEUED
+    global MATCH_CREATED
+    global MATCH_INITIALISING
     global MATCH_LIVE
     global MATCH_FINISHED
 
     def __init__(self, team1: Team, team2: Team, maps: Iterable[str], sides: Iterable[str],
-                 id=None, live_timestamp=None, status=None):
+                 id: Optional[str] = None, status: str = MATCH_CREATED,
+                 created_timestamp: Optional[datetime.datetime] = None,
+                 live_timestamp: Optional[datetime.datetime] = None,
+                 finished_timestamp: Optional[datetime.datetime] = None):
         self.teams = [team1, team2]
         self.maps = maps
         self.sides = sides
@@ -56,14 +58,17 @@ class Match:
             self.id = id
         else:
             self.id = uuid4().hex
-        if live_timestamp:
-            self.live_timestamp = live_timestamp
+        if created_timestamp:
+            self.created_timestamp = created_timestamp
         else:
-            self.live_timestamp = datetime.now()
-        if status is not None:
+            self.created_timestamp = datetime.datetime.now()
+        self.live_timestamp = live_timestamp
+        self.finished_timestamp = finished_timestamp
+        if status in [MATCH_CREATED, MATCH_INITIALISING, MATCH_LIVE, MATCH_FINISHED]:
             self.status = status
         else:
-            self.status = MATCH_SCHEDULED
+            raise ValueError(f"status must be one of {MATCH_CREATED, MATCH_READY, MATCH_LIVE, MATCH_FINISHED},"
+                             f"got {status}.")
 
         cvars = {}
         players_per_team = max(len(self.teams[0].players), len(self.teams[1].players))
@@ -88,3 +93,10 @@ class Match:
                                            "players": dict(zip(team.steam_ids, team.display_names))}
 
         self.config_json = json.dumps(self.config)
+
+    def set_as_live(self):
+        self.status = MATCH_LIVE
+        self.live_timestamp = datetime.datetime.now()
+
+    def set_as_initialising(self):
+        self.status = MATCH_INITIALISING
