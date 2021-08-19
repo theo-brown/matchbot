@@ -26,21 +26,22 @@ class MatchesTable:
 
 
     async def update(self, *matches: Match):
-        await asyncio.gather(self.dbi.pool.executemany("UPDATE matches"
-                                                       " SET status = $2, created_timestamp = $3, live_timestamp = $4,"
-                                                       " finished_timestamp = $5, team1_id = $6, team2_id = $7"
-                                                       " WHERE id = $1;",
-                                                       [(match.id, match.status, match.created_timestamp,
-                                                         match.live_timestamp, match.finished_timestamp,
-                                                         match.teams[0].id, match.teams[1].id)
-                                                         for match in matches]),
-                             self.dbi.pool.executemany("INSERT INTO match_maps(match_id, map_number, map_id, side)"
-                                                       " VALUES ($1, $2, $3, $4)"
-                                                       " ON CONFLICT(match_id, map_number) DO UPDATE"
-                                                       " SET map_id = $3, side = $4;",
-                                                       [(match.id, i+1, map, side)
-                                                        for match in matches
-                                                        for i, (map, side) in enumerate(zip(match.maps, match.sides))]))
+        async with self.dbi.pool.acquire() as connection:
+            await connection.executemany("UPDATE matches"
+                                         " SET status = $2, created_timestamp = $3, live_timestamp = $4,"
+                                         " finished_timestamp = $5, team1_id = $6, team2_id = $7"
+                                         " WHERE id = $1;",
+                                         [(match.id, match.status, match.created_timestamp,
+                                           match.live_timestamp, match.finished_timestamp,
+                                           match.teams[0].id, match.teams[1].id)
+                                          for match in matches])
+            await connection.executemany("INSERT INTO match_maps(match_id, map_number, map_id, side)"
+                                         " VALUES ($1, $2, $3, $4)"
+                                         " ON CONFLICT(match_id, map_number) DO UPDATE"
+                                         " SET map_id = $3, side = $4;",
+                                         [(match.id, i+1, map, side)
+                                          for match in matches
+                                          for i, (map, side) in enumerate(zip(match.maps, match.sides))])
 
     async def get(self, column: str, *values) -> Union[Match, Iterable[Match]]:
         if column not in ['id', 'status', 'created_timestamp', 'live_timestamp', 'finished_timestamp',
@@ -66,11 +67,11 @@ class MatchesTable:
             # map_records is a dict, keys: match id, values: list of records
             # TODO: Currently this performs a database operation for each match, which could probably be optimised
             map_records = {match_record.get('id'): await connection.fetch("SELECT map_id, side"
-                                                                        " FROM match_maps"
-                                                                        " WHERE match_id = $1"
-                                                                        " ORDER BY map_number ASC",
-                                                                         match_record.get('id'))
-                                          for match_record in match_records}
+                                                                          " FROM match_maps"
+                                                                          " WHERE match_id = $1"
+                                                                          " ORDER BY map_number ASC",
+                                                                          match_record.get('id'))
+                           for match_record in match_records}
 
         # Get data from teams table
         # sum([[1,2], [3,4]], []) produces a flattened list [1,2,3,4]

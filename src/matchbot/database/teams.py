@@ -22,23 +22,25 @@ class TeamsTable:
         if column not in ['id', 'name', 'tag']:
             raise ValueError(f"Column {column} not found in table"
                              " (expected 'id', 'name' or 'tag').")
-        teams = [Team(name=record.get('name'),
-                      tag=record.get('tag'),
-                      id=record.get('id'))
-                 for record in await self.dbi.pool.fetch("SELECT id, name, tag"
-                                                       " FROM teams"
-                                                       f" WHERE {column} = ANY ($1);", values)]
-        for team in teams:
-            team.players = [User(steam_id=record.get('steam_id'),
-                                 discord_id=record.get('discord_id'),
-                                 display_name=record.get('display_name'))
-                            for record in
-                            await self.dbi.pool.fetch("SELECT steam_id, discord_id, display_name"
-                                                    " FROM users"
-                                                    " WHERE steam_id = ANY (SELECT steam_id"
-                                                                           " FROM team_players"
-                                                                           " WHERE team_id = $1);",
-                                                    team.id)]
+
+        async with self.dbi.pool.acquire() as connection:
+            teams = [Team(name=record.get('name'),
+                          tag=record.get('tag'),
+                          id=record.get('id'))
+                     for record in await connection.fetch("SELECT id, name, tag"
+                                                          " FROM teams"
+                                                         f" WHERE {column} = ANY ($1);", values)]
+            for team in teams:
+                team.players = [User(steam_id=record.get('steam_id'),
+                                     discord_id=record.get('discord_id'),
+                                     display_name=record.get('display_name'))
+                                for record in
+                                await connection.fetch("SELECT steam_id, discord_id, display_name"
+                                                       " FROM users"
+                                                       " WHERE steam_id = ANY (SELECT steam_id"
+                                                                              " FROM team_players"
+                                                                              " WHERE team_id = $1);",
+                                                       team.id)]
 
         if len(values) == 1:
             if len(teams) == 1:
