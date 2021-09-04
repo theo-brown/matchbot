@@ -2,9 +2,6 @@ CREATE TABLE IF NOT EXISTS maps (id   VARCHAR(32) NOT NULL,
                                  name VARCHAR(32) NOT NULL,
                                  PRIMARY KEY (id));
 
-CREATE TABLE IF NOT EXISTS sides (side VARCHAR(32) NOT NULL,
-                                  PRIMARY KEY (side));
-
 CREATE TABLE IF NOT EXISTS server_tokens (token VARCHAR(32) NOT NULL,
                                           PRIMARY KEY (token));
 
