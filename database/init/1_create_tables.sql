@@ -29,10 +29,12 @@ CREATE TABLE IF NOT EXISTS matches (id                 VARCHAR(32) NOT NULL,
                                     team2_id           VARCHAR(32) NOT NULL REFERENCES teams(id),
                                     PRIMARY KEY (id));
 
+CREATE TYPE map_sides AS ENUM ('knife', 'team1_ct', 'team1_t', 'team2_ct', 'team2_t');
+
 CREATE TABLE IF NOT EXISTS match_maps (match_id   VARCHAR(32) NOT NULL REFERENCES matches(id),
                                        map_number INTEGER     NOT NULL,
                                        map_id     VARCHAR(32) NOT NULL REFERENCES maps(id),
-                                       side       VARCHAR(32) NOT NULL REFERENCES sides(side),
+                                       side       map_sides,
                                        PRIMARY KEY (match_id, map_number));
 
 CREATE TABLE IF NOT EXISTS servers (id            VARCHAR(32) NOT NULL,
