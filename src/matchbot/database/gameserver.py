@@ -51,9 +51,10 @@ class GameServerTokensTable:
 
     async def insert(self, *tokens: str):
         async with self.pool.acquire() as connection:
-            await connection.executemany("INSERT INTO server_tokens(token)"
-                                         " VALUES ($1)"
-                                         " ON CONFLICT DO NOTHING;", tokens)
+            substitution = ', '.join(f"(${i+1})" for i, v in enumerate(tokens))
+            await connection.execute("INSERT INTO server_tokens(token)"
+                                    f" VALUES {substitution}"
+                                    f" ON CONFLICT DO NOTHING;", *tokens)
 
     async def delete(self, *tokens: str):
         async with self.pool.acquire() as connection:
