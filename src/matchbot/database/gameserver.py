@@ -94,11 +94,18 @@ class GameServersTable:
             raise LookupError(f"Cannot lookup server by {column} (expected 'id', 'token', 'ip', 'port', 'gotv_port'"
                               f" or 'match_id').")
 
+        if len(values) == 1 and values[0] is None:
+            query = ("SELECT id, token, ip, port, gotv_port, password,"
+                     " gotv_password, rcon_password, match_id FROM servers"
+                    f" WHERE {column} IS NULL")
+        else:
+            query = ("SELECT id, token, ip, port, gotv_port, password,"
+                     " gotv_password, rcon_password, match_id FROM servers"
+                    f" WHERE {column} = ANY ($1)", values)
+
         async with self.pool.acquire() as connection:
             servers = [from_dict(record)
-                       for record in await connection.fetch("SELECT id, token, ip, port, gotv_port, password,"
-                                                            " gotv_password, rcon_password, match_id FROM servers"
-                                                           f" WHERE {column} = ANY ($1)", values)]
+                       for record in await connection.fetch(query)]
 
         if len(values) == 1:
             if len(servers) == 1:
