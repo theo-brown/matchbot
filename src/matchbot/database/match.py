@@ -3,6 +3,7 @@ from typing import Iterable, Optional
 import datetime
 from uuid import uuid4
 from operator import itemgetter
+import json
 
 MATCH_CREATED = "CREATED"
 MATCH_QUEUED = "QUEUED"
@@ -50,12 +51,33 @@ class Match:
                 f"\tLive at: {self.live_timestamp}\n"
                 f"\tFinished at: {self.finished_timestamp}\n")
 
+def to_json_str(match: Match) -> str:
+    return json.dumps({'id': match.id,
+                       'status': match.status,
+                       'team_ids': match.team_ids,
+                       'maps': match.maps,
+                       'sides': match.sides,
+                       'created_timestamp': match.created_timestamp.isoformat() if match.created_timestamp else None,
+                       'live_timestamp': match.live_timestamp.isoformat() if match.live_timestamp else None,
+                       'finished_timestamp': match.finished_timestamp.isoformat() if match.finished_timestamp else None})
 
-def from_dict(match_dict: dict) -> Match:
-    return Match(name=match_dict.get('name'),
-                 steam_ids=match_dict.get('steam_ids'),
-                 tag=match_dict.get('tag'),
-                 id=match_dict.get('id'))
+
+def from_json_str(match_json_str: str) -> Match:
+    match_json = json.loads(match_json_str)
+
+    created_timestamp = match_json.get('created_timestamp')
+    live_timestamp = match_json.get('live_timestamp')
+    finished_timestamp = match_json.get('finished_timestamp')
+
+    return Match(team1_id=match_json.get('team_ids')[0],
+                 team2_id=match_json.get('team_ids')[1],
+                 maps=match_json.get('maps'),
+                 sides=match_json.get('sides'),
+                 id=match_json.get('id'),
+                 status=match_json.get('status'),
+                 created_timestamp=datetime.datetime.fromisoformat(created_timestamp) if created_timestamp else None,
+                 live_timestamp=datetime.datetime.fromisoformat(live_timestamp) if live_timestamp else None,
+                 finished_timestamp=datetime.datetime.fromisoformat(finished_timestamp) if finished_timestamp else None)
 
 
 class MatchesTable:
