@@ -1,6 +1,7 @@
 version: "3"
 
 services:
+
   database:
     image: "postgres:alpine"
     restart: always
@@ -8,31 +9,40 @@ services:
     command: -p ${POSTGRES_PORT}
     # Forward from POSTGRES_PORT on the host to POSTGRES_PORT on the container
     ports:
-    - ${POSTGRES_PORT}:${POSTGRES_PORT}
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
     environment:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
       - POSTGRES_DB
     volumes:
-      - database:/var/lib/postgresql/data
+      # Use the 'database' volume to store the data
+      - database-volume:/var/lib/postgresql/data
+      # Execute the database/init scripts on startup
       - ./database/init:/docker-entrypoint-initdb.d
 
-#  manager:
+  redis:
+    image: "redis:alpine"
+    restart: always
+    # Set Redis to use REDIS_PORT
+    command: --port ${REDIS_PORT}
+    # Forward from REDIS_PORT on the host to REDIS_PORT on the container
+    ports:
+      - ${REDIS_PORT}:${REDIS_PORT}
+
+#  matchstarter:
 #    build:
 #      context: .
-#      dockerfile: manager/Dockerfile
+#      dockerfile: matchstarter/Dockerfile
 #    depends_on:
 #      - database
 #    environment:
-#      - PUBLIC_IP
-#      - POSTGRES_HOST = 'database'
+#      - POSTGRES_HOST='database'
+#      - POSTGRES_PORT
 #      - POSTGRES_USER
 #      - POSTGRES_PASSWORD
 #      - POSTGRES_DB
-#      - PORT_MIN
-#      - PORT_MAX
-#      - GOTV_PORT_MIN
-#      - GOTV_PORT_MAX
+#      - REDIS_HOST='redis'
+#      - REDIS_PORT
 #    ports:
 #    - "$PORT_MIN-$PORT_MAX:$PORT_MIN-$PORT_MAX/tcp"
 #    - "$PORT_MIN-$PORT_MAX:$PORT_MIN-$PORT_MAX/udp"
@@ -40,21 +50,5 @@ services:
 #    volumes:
 #     - /var/run/docker.sock:/var/run/docker.sock
 
-#  discord:
-#    build: discord
-#    depends_on:
-#      - database
-#    environment:
-#      BOT_TOKEN: bot_token
-
-#  web:
-#    build: web
-#    depends_on:
-#      - database
-#    environment:
-#    - POSTGRES_USER
-#    - POSTGRES_PASSWORD
-#    - POSTGRES_DB
-
 volumes:
-  database:
+  database-volume:
