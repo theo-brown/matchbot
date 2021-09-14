@@ -2,7 +2,7 @@ import asyncpg
 from time import time
 
 
-async def new_pool(host: str, port: int, user: str, password: str, database_name: str, timeout=5):
+async def new_pool(host: str, port: int, user: str, password: str, database_name: str, timeout=5) -> asyncpg.pool.Pool:
     start_time = time()
     pool = None
 
@@ -17,4 +17,7 @@ async def new_pool(host: str, port: int, user: str, password: str, database_name
         except ConnectionRefusedError:
             continue
 
-    return pool
+    if pool is None:
+        raise ConnectionError(f"Connection to database failed after {timeout}s")
+    else:
+        return pool
