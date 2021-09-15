@@ -100,7 +100,10 @@ class MatchesTable:
                                            match.finished_timestamp, match.team_ids[0], match.team_ids[1])
                                           for match in matches])
             await connection.executemany("INSERT INTO match_maps(match_id, map_number, map_id, side)"
-                                         " VALUES ($1, $2, $3, $4);",
+                                         " VALUES ($1, $2, $3, $4)"
+                                         " ON CONFLICT (match_id, map_number) DO UPDATE"
+                                         " SET map_id = excluded.map_id,"
+                                         " side = excluded.side;",
                                          [(match.id, i+1, map_id, side)
                                           for match in matches
                                           for i, (map_id, side) in enumerate(zip(match.maps, match.sides))])
