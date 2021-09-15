@@ -1,5 +1,4 @@
 python-dotenv~=0.18.0
 aiorcon~=0.6.8
 aiodocker~=0.19.1
-discord~=1.7.3
 asyncpg~=0.24.0
