@@ -2,7 +2,7 @@ FROM python:3
 
 COPY src/ /app/src
 
-COPY manager/run.py /app/run.py
+COPY matchstarter/run.py /app/run.py
 
 WORKDIR /app
 
