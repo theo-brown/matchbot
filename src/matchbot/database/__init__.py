@@ -1,5 +1,6 @@
 import asyncpg
 from time import time
+import matchbot.database.match, matchbot.database.gameserver, matchbot.database.team, matchbot.database.user
 
 
 async def new_pool(host: str, port: int, user: str, password: str, database_name: str, timeout=5) -> asyncpg.pool.Pool:
