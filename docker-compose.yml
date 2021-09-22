@@ -15,8 +15,8 @@ services:
       - POSTGRES_PASSWORD
       - POSTGRES_DB
     volumes:
-      # Use the 'database' volume to store the data
-      - database-volume:/var/lib/postgresql/data
+      # Use database_volume to store the data
+      - database_volume:/var/lib/postgresql/data
       # Execute the database/init scripts on startup
       - ./database/init:/docker-entrypoint-initdb.d
 
@@ -51,4 +51,4 @@ services:
 #     - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
-  database-volume:
+  database_volume:
