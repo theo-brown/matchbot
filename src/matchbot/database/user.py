@@ -15,9 +15,14 @@ class User:
 
 
 def from_dict(user_dict: dict) -> User:
-    return User(user_dict.get('steam_id'),
-                user_dict.get('display_name'),
-                user_dict.get('discord_id'))
+    steam_id = user_dict.get('steam_id')
+    display_name = user_dict.get('display_name')
+    discord_id = user_dict.get('discord_id')
+    if steam_id is None:
+        raise ValueError("steam_id cannot be empty")
+    if display_name is None or len(display_name) == 0:
+        raise ValueError("display_name cannot be empty")
+    return User(steam_id, display_name, discord_id)
 
 
 class UsersTable:
