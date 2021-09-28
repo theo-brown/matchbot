@@ -11,33 +11,35 @@ CREATE TABLE IF NOT EXISTS users (steam_id     BIGINT      NOT NULL,
                                   PRIMARY KEY (steam_id),
                                   CONSTRAINT unique_user UNIQUE (steam_id, discord_id, display_name));
 
-CREATE TABLE IF NOT EXISTS teams (id   VARCHAR(32) NOT NULL,
+CREATE TABLE IF NOT EXISTS teams (id   UUID NOT NULL,
                                   name VARCHAR(64) NOT NULL,
                                   tag  VARCHAR(15) NOT NULL DEFAULT '',
                                   PRIMARY KEY (id));
 
-CREATE TABLE IF NOT EXISTS team_players (team_id  VARCHAR(32) NOT NULL REFERENCES teams(id),
+CREATE TABLE IF NOT EXISTS team_members (team_id  UUID NOT NULL REFERENCES teams(id),
                                          steam_id BIGINT      NOT NULL REFERENCES users(steam_id),
                                          PRIMARY KEY (team_id, steam_id));
 
-CREATE TABLE IF NOT EXISTS matches (id                 VARCHAR(32) NOT NULL,
-                                    status             VARCHAR(32) NOT NULL DEFAULT 'CREATED',
-                                    created_timestamp  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                    live_timestamp     TIMESTAMP            DEFAULT NULL,
-                                    finished_timestamp TIMESTAMP            DEFAULT NULL,
-                                    team1_id           VARCHAR(32) NOT NULL REFERENCES teams(id),
-                                    team2_id           VARCHAR(32) NOT NULL REFERENCES teams(id),
+CREATE TYPE match_status AS ENUM ('CREATED', 'QUEUED', 'LIVE', 'FINISHED');
+
+CREATE TABLE IF NOT EXISTS matches (id                 UUID         NOT NULL,
+                                    status             match_status NOT NULL DEFAULT 'CREATED',
+                                    created_timestamp  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                    live_timestamp     TIMESTAMP             DEFAULT NULL,
+                                    finished_timestamp TIMESTAMP             DEFAULT NULL,
+                                    team1_id           UUID         NOT NULL REFERENCES teams(id),
+                                    team2_id           UUID         NOT NULL REFERENCES teams(id),
                                     PRIMARY KEY (id));
 
-CREATE TYPE map_sides AS ENUM ('knife', 'team1_ct', 'team1_t', 'team2_ct', 'team2_t');
+CREATE TYPE map_side AS ENUM ('knife', 'team1_ct', 'team1_t', 'team2_ct', 'team2_t');
 
-CREATE TABLE IF NOT EXISTS match_maps (match_id   VARCHAR(32) NOT NULL REFERENCES matches(id),
+CREATE TABLE IF NOT EXISTS match_maps (match_id   UUID        NOT NULL REFERENCES matches(id),
                                        map_number INTEGER     NOT NULL,
                                        map_id     VARCHAR(32) NOT NULL REFERENCES maps(id),
-                                       side       map_sides,
+                                       side       map_side    NOT NULL DEFAULT 'knife',
                                        PRIMARY KEY (match_id, map_number));
 
-CREATE TABLE IF NOT EXISTS servers (id            VARCHAR(32) NOT NULL,
+CREATE TABLE IF NOT EXISTS servers (id            UUID        NOT NULL,
                                     token         VARCHAR(32) NOT NULL UNIQUE REFERENCES server_tokens(token),
                                     ip            INET,
                                     port          INTEGER     UNIQUE,
@@ -45,5 +47,5 @@ CREATE TABLE IF NOT EXISTS servers (id            VARCHAR(32) NOT NULL,
                                     password      VARCHAR(32) DEFAULT NULL,
                                     gotv_password VARCHAR(32) DEFAULT NULL,
                                     rcon_password VARCHAR(32) DEFAULT NULL,
-                                    match_id      VARCHAR(32) DEFAULT NULL REFERENCES matches(id),
+                                    match_id      UUID        DEFAULT NULL REFERENCES matches(id),
                                     PRIMARY KEY (id));
