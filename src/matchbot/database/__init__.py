@@ -3,12 +3,22 @@ from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey, DateTime
 from sqlalchemy.dialects.postgresql import UUID, INET, ENUM
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
 
 
 Base = declarative_base()
 
 MapSide = ENUM('team1_ct', 'team2_ct', 'team1_t', 'team2_t', 'knife', name='map_side')
 MatchStatus = ENUM('CREATED', 'QUEUED', 'LIVE', 'FINISHED', name='match_status')
+
+
+def new_engine(host: str, port: int, user: str, password: str, db_name: str):
+    return create_async_engine(f'postgresql+asyncpg://{user}:{password}@{host}:{port}/{db_name}',
+                               echo=True,  future=True)
+
+
+def new_session(engine: AsyncEngine):
+    return AsyncSession(engine, expire_on_commit=False)
 
 
 class Map(Base):
