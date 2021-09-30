@@ -3,7 +3,7 @@ import asyncio
 from typing import Optional, Union, Callable, Coroutine
 
 
-def connect(host="localhost", port=6379, decode_responses=True):
+def connect(host="localhost", port=6379, decode_responses=True) -> aioredis.Redis:
     if host is None:
         host = "localhost"
     if port is None:
@@ -30,7 +30,7 @@ class BlockingFIFOQueue:
     async def push(self, value):
         await self.redis.lpush(self.channel, value)
 
-    async def pop(self):
+    async def pop(self) -> str:
         channel, value = await self.redis.brpop(self.channel, 0)
         return value
 
@@ -71,5 +71,5 @@ class EventHandler:
             raise RuntimeError("event handler not running")
 
     @property
-    def is_running(self):
+    def is_running(self) -> bool:
         return self._running

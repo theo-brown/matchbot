@@ -12,12 +12,12 @@ MapSide = ENUM('team1_ct', 'team2_ct', 'team1_t', 'team2_t', 'knife', name='map_
 MatchStatus = ENUM('CREATED', 'QUEUED', 'LIVE', 'FINISHED', name='match_status')
 
 
-def new_engine(host: str, port: int, user: str, password: str, db_name: str):
+def new_engine(host: str, port: int, user: str, password: str, db_name: str) -> AsyncEngine:
     return create_async_engine(f'postgresql+asyncpg://{user}:{password}@{host}:{port}/{db_name}',
                                echo=True,  future=True)
 
 
-def new_session(engine: AsyncEngine):
+def new_session(engine: AsyncEngine) -> AsyncSession:
     return AsyncSession(engine, expire_on_commit=False)
 
 

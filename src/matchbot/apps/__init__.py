@@ -22,7 +22,7 @@ class MatchbotBaseApp:
         self.engine = matchbot.database.new_engine(self._db_host, self._db_port,
                                                    self._db_user, self._db_password, self._db_name)
 
-    def new_session(self):
+    def new_session(self) -> matchbot.database.AsyncSession:
         return matchbot.database.new_session(self.engine)
 
     def new_event_handler(self, channel: str, callback: Coroutine):
