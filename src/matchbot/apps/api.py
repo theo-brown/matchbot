@@ -17,6 +17,9 @@ engine = db.new_engine(getenv('POSTGRES_HOST'),
 async def get_user(steam_id: Optional[int] = None,
                    display_name: Optional[str] = None,
                    discord_id: Optional[int] = None):
+    """
+    Get the user that matches all of the supplied columns
+    """
     async with db.new_session(engine) as session:
         condition = and_((db.models.User.steam_id == steam_id) if steam_id else True,
                          (db.models.User.display_name == display_name) if display_name else True,
@@ -33,6 +36,9 @@ async def get_user(steam_id: Optional[int] = None,
 async def update_user(steam_id: int,
                       display_name: Optional[str] = None,
                       discord_id: Optional[int] = None):
+    """
+    Update the display_name and discord_id of the user with the matching steam_id
+    """
     async with db.new_session(engine) as session:
         r = await session.execute(select(db.models.User).where(db.models.User.steam_id==steam_id))
         user = r.scalars().first()
@@ -54,6 +60,9 @@ async def update_user(steam_id: int,
 async def delete_user(steam_id: Optional[int] = None,
                       display_name: Optional[str] = None,
                       discord_id: Optional[int] = None):
+    """
+    Delete a user that matches all of the supplied columns
+    """
     async with db.new_session(engine) as session:
         condition = and_((db.models.User.steam_id == steam_id) if steam_id else True,
                          (db.models.User.display_name == display_name) if display_name else True,
