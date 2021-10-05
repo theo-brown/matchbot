@@ -47,7 +47,29 @@ async def update_user(steam_id: int,
             await session.rollback()
             raise
 
-        return modified_user.json
+        return True
+
+
+@app.delete("/user")
+async def delete_user(steam_id: Optional[int] = None,
+                      display_name: Optional[str] = None,
+                      discord_id: Optional[int] = None):
+    async with db.new_session(engine) as session:
+        condition = and_((db.models.User.steam_id == steam_id) if steam_id else True,
+                         (db.models.User.display_name == display_name) if display_name else True,
+                         (db.models.User.discord_id == discord_id) if discord_id else True)
+        r = await session.execute(select(db.models.User).where(condition))
+        user = r.scalars().first()
+        if user is not None:
+            try:
+                session.begin()
+                await session.delete(user)
+                await session.commit()
+            except:
+                await session.rollback()
+                raise
+        return True
+
 
 if __name__=='__main__':
     import uvicorn
