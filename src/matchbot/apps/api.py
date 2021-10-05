@@ -29,6 +29,26 @@ async def get_user(steam_id: Optional[int] = None,
             return user.json
 
 
+@app.post("/user")
+async def update_user(steam_id: int,
+                      display_name: Optional[str] = None,
+                      discord_id: Optional[int] = None):
+    async with db.new_session(engine) as session:
+        r = await session.execute(select(db.models.User).where(db.models.User.steam_id==steam_id))
+        user = r.scalars().first()
+        modified_user = db.models.User(steam_id=steam_id,
+                                       display_name=display_name if display_name else user.display_name,
+                                       discord_id=discord_id if discord_id else user.discord_id)
+        try:
+            session.begin()
+            await session.merge(modified_user)
+            await session.commit()
+        except:
+            await session.rollback()
+            raise
+
+        return modified_user.json
+
 if __name__=='__main__':
     import uvicorn
     uvicorn.run("api:app", port=9000, reload=True)
