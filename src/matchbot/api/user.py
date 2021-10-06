@@ -1,19 +1,38 @@
 from typing import Optional
-from fastapi import FastAPI
+from matchbot import api
 from matchbot import database as db
-from sqlalchemy import select, and_
-from os import getenv
-
-app = FastAPI()
-engine = db.new_engine(getenv('POSTGRES_HOST'),
-                       getenv('POSTGRES_PORT'),
-                       getenv('POSTGRES_USER'),
-                       getenv('POSTGRES_PASSWORD'),
-                       getenv('POSTGRES_DB'))
+from sqlalchemy import and_, select
+import sqlalchemy
+from fastapi import APIRouter
 
 
+engine: sqlalchemy.ext.asyncio.AsyncEngine
 
-@app.get("/user")
+router = APIRouter(prefix='/user',
+                   tags=['user'],)
+
+
+@router.put('/')
+async def create_user(user: api.models.User):
+    """
+    Add a user to the database
+    """
+    user = db.models.User(steam_id=user.steam_id,
+                          discord_id=user.discord_id,
+                          display_name=user.display_name)
+    async with db.new_session(engine) as session:
+        try:
+            session.begin()
+            session.add(user)
+            await session.commit()
+        except:
+            await session.rollback()
+            raise
+
+    return user.json
+
+
+@router.get('/')
 async def get_user(steam_id: Optional[int] = None,
                    display_name: Optional[str] = None,
                    discord_id: Optional[int] = None):
@@ -32,10 +51,10 @@ async def get_user(steam_id: Optional[int] = None,
             return user.json
 
 
-@app.post("/user")
-async def update_user(steam_id: int,
-                      display_name: Optional[str] = None,
-                      discord_id: Optional[int] = None):
+@router.post('/')
+async def update(steam_id: int,
+                 display_name: Optional[str] = None,
+                 discord_id: Optional[int] = None):
     """
     Update the display_name and discord_id of the user with the matching steam_id
     """
@@ -56,10 +75,10 @@ async def update_user(steam_id: int,
         return True
 
 
-@app.delete("/user")
-async def delete_user(steam_id: Optional[int] = None,
-                      display_name: Optional[str] = None,
-                      discord_id: Optional[int] = None):
+@router.delete('/')
+async def delete(steam_id: Optional[int] = None,
+                 display_name: Optional[str] = None,
+                 discord_id: Optional[int] = None):
     """
     Delete a user that matches all of the supplied columns
     """
@@ -78,8 +97,3 @@ async def delete_user(steam_id: Optional[int] = None,
                 await session.rollback()
                 raise
         return True
-
-
-if __name__=='__main__':
-    import uvicorn
-    uvicorn.run("api:app", port=9000, reload=True)

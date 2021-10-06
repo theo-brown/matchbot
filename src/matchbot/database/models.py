@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import UUID, INET, ENUM
 from sqlalchemy.orm import declarative_base, relationship
 from typing import Optional
 
+
 Base = declarative_base()
 
 MapSide = ENUM('team1_ct', 'team2_ct', 'team1_t', 'team2_t', 'knife', name='map_side')
@@ -30,8 +31,6 @@ class MatchMap(Base):
     map_id = Column(String(32), ForeignKey('maps.id'))
     side = Column(MapSide)
 
-    # match = relationship('Match', back_populates='maps', lazy='selectin')
-
 
 class Match(Base):
     __tablename__ = 'matches'
@@ -43,10 +42,6 @@ class Match(Base):
     finished_timestamp = Column(DateTime, nullable=True)
     team1_id = Column(UUID(as_uuid=True), ForeignKey('teams.id'))
     team2_id = Column(UUID(as_uuid=True), ForeignKey('teams.id'))
-
-    # server = relationship('Server', back_populates='match')
-    # maps = relationship('MatchMap', back_populates='match', lazy='selectin')
-    # team1 = relationship('Team', foreign_keys=[team1_id], lazy='selectin')
 
 
 class ServerToken(Base):
@@ -67,8 +62,6 @@ class Server(Base):
     gotv_password = Column(String(32), nullable=True)
     rcon_password = Column(String(32), nullable=True)
     match_id = Column(UUID(as_uuid=True), ForeignKey('matches.id'))
-
-    # match = relationship('Match', back_populates='server', lazy='selectin')
 
 
 class TeamMembership(Base):
