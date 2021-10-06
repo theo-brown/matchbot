@@ -3,39 +3,39 @@ from src import Match, Team
 from matchbot.apps import MatchbotBaseApp
 from sqlalchemy import select
 
-
-class MatchStarter(MatchbotBaseApp):
-    def __init__(self):
-        pass
-        # self.docker = aiodocker.Docker()
-        # self.new_event_handler('match_queue', self.start_match)
-
-    async def generate_config(self, match_id: str) -> dict:
-        async with self.new_session() as session:
-            match_result = await session.execute(select(Match).where(Match.id==match_id))
-            match = match_result.scalar()
-            team1_result = await session.execute(select(Team).where(Team.id==match.team1_id))
-            team1 = team1_result.scalar()
-            team2_result = await session.execute(select(Team).where(Team.id==match.team2_id))
-            team2 = team2.scalar()
-
-        players_per_team = max(len(team1.users), len(team2.users))
-        return {"matchid": match.id,
-                "num_maps": len(match.maps),
-                "maplist": match.maps,
-                "skip_veto": True,
-                "map_sides": [match_map.side for match_map in match.maps],
-                "players_per_team": players_per_team,
-                "team1": {"name": team1.name,
-                          "tag": team1.tag,
-                          "players": {user.steam_id: user.display_name
-                                      for user in team1.users}},
-                "team2": {"name": team2.name,
-                          "tag": team2.tag,
-                          "players": {user.steam_id: user.display_name
-                                      for user in team2.users}},
-                "cvars": {"get5_warmup_cfg": "warmup_2v2.cfg" if players_per_team == 2 else "warmup_5v5.cfg",
-                          "get5_live_cfg": "live_2v2.cfg" if players_per_team == 2 else "live_5v5.cfg"}}
+#
+# class MatchStarter(MatchbotBaseApp):
+#     def __init__(self):
+#         pass
+#         # self.docker = aiodocker.Docker()
+#         # self.new_event_handler('match_queue', self.start_match)
+#
+#     async def generate_config(self, match_id: str) -> dict:
+#         async with self.new_session() as session:
+#             match_result = await session.execute(select(Match).where(Match.id==match_id))
+#             match = match_result.scalar()
+#             team1_result = await session.execute(select(Team).where(Team.id==match.team1_id))
+#             team1 = team1_result.scalar()
+#             team2_result = await session.execute(select(Team).where(Team.id==match.team2_id))
+#             team2 = team2.scalar()
+#
+#         players_per_team = max(len(team1.users), len(team2.users))
+#         return {"matchid": match.id,
+#                 "num_maps": len(match.maps),
+#                 "maplist": match.maps,
+#                 "skip_veto": True,
+#                 "map_sides": [match_map.side for match_map in match.maps],
+#                 "players_per_team": players_per_team,
+#                 "team1": {"name": team1.name,
+#                           "tag": team1.tag,
+#                           "players": {user.steam_id: user.display_name
+#                                       for user in team1.users}},
+#                 "team2": {"name": team2.name,
+#                           "tag": team2.tag,
+#                           "players": {user.steam_id: user.display_name
+#                                       for user in team2.users}},
+#                 "cvars": {"get5_warmup_cfg": "warmup_2v2.cfg" if players_per_team == 2 else "warmup_5v5.cfg",
+#                           "get5_live_cfg": "live_2v2.cfg" if players_per_team == 2 else "live_5v5.cfg"}}
 
     #
     # async def start_match(self, match_json: str):
