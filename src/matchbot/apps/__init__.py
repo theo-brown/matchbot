@@ -1,6 +1,4 @@
-import matchbot.apps.matchstarter
-
-import matchbot.database
+import matchbot.database as db
 from matchbot.redis import EventHandler
 from typing import Coroutine
 
@@ -19,11 +17,11 @@ class MatchbotBaseApp:
 
         self.event_handlers = {}
 
-        self.engine = matchbot.database.new_engine(self._db_host, self._db_port,
-                                                   self._db_user, self._db_password, self._db_name)
+        self.engine = db.new_engine(self._db_host, self._db_port,
+                                    self._db_user, self._db_password, self._db_name)
 
-    def new_session(self) -> matchbot.database.AsyncSession:
-        return matchbot.database.new_session(self.engine)
+    def new_session(self) -> db.functions.AsyncSession:
+        return db.new_session(self.engine)
 
     def new_event_handler(self, channel: str, callback: Coroutine):
         self.event_handlers[channel] = EventHandler(channel, callback, host=self._redis_host, port=self._redis_port)
