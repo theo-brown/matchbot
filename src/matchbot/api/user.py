@@ -15,7 +15,7 @@ router = APIRouter(prefix='/users',
 # CREATE #
 ##########
 @router.post('/')
-async def create_user(user: api.models.User):
+async def create_user(user: api.models.CreateUser):
     """
     Add a user to the database
     """
@@ -70,15 +70,16 @@ async def get_user_by_display_name(display_name: str):
 ##########
 # UPDATE #
 ##########
-@router.put('/')
-async def update_user(user: api.models.User):
+@router.put('/steam_id/{steam_id}')
+async def update_user(steam_id: int,
+                      user: api.models.UpdateUser):
     """
     Update the display_name and discord_id of the user with the matching steam_id
     """
     async with db.new_session(engine) as session:
-        r = await session.execute(select(db.models.User).where(db.models.User.steam_id==user.steam_id))
+        r = await session.execute(select(db.models.User).where(db.models.User.steam_id==steam_id))
         unmodified_user = r.scalars().first()
-        modified_user = db.models.User(steam_id=user.steam_id,
+        modified_user = db.models.User(steam_id=steam_id,
                                        display_name=user.display_name if user.display_name else unmodified_user.display_name,
                                        discord_id=user.discord_id if user.discord_id else unmodified_user.discord_id)
         try:
