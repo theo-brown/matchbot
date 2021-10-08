@@ -1,7 +1,7 @@
 from typing import Optional, Union
 from matchbot import api
 from matchbot import database as db
-from sqlalchemy import and_, select
+from sqlalchemy import select
 import sqlalchemy
 from fastapi import APIRouter, HTTPException
 

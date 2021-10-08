@@ -1,9 +1,9 @@
-from typing import Optional, Union
+from typing import Union
 from matchbot import api
 from matchbot import database as db
 from sqlalchemy import and_, select
 import sqlalchemy
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from uuid import UUID
 
 engine: sqlalchemy.ext.asyncio.AsyncEngine
