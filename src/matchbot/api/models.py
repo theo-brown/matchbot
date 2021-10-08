@@ -18,9 +18,16 @@ class CreateTeam(BaseModel):
     id: UUID
     name: str
     tag: str
-    user_ids: List[int]
+    user_ids: Optional[List[int]] = None
 
 
 class UpdateTeam(BaseModel):
     name: Optional[str] = None
     tag: Optional[str] = None
+
+
+class CreateMember(BaseModel):
+    steam_id: int
+
+class UpdateMembers(BaseModel):
+    steam_ids: List[int]
