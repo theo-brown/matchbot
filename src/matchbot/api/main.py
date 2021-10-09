@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from matchbot.api import users as user_api
 from matchbot.api import teams as team_api
+from matchbot.api import matches as match_api
+from matchbot.api import servers as server_api
 from matchbot import database as db
 from os import getenv
 
@@ -19,6 +21,12 @@ app.include_router(user_api.router)
 
 team_api.engine = engine
 app.include_router(team_api.router)
+
+match_api.engine = engine
+app.include_router(match_api.router)
+
+server_api.engine = engine
+app.include_router(server_api.router)
 
 
 if __name__ == "__main__":
