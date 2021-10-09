@@ -5,6 +5,7 @@ from matchbot.api import matches as match_api
 from matchbot.api import servers as server_api
 from matchbot import database as db
 from os import getenv
+import uvicorn
 
 
 app = FastAPI(title='MatchBot API')
@@ -14,7 +15,6 @@ engine = db.new_engine(host=getenv('POSTGRES_HOST'),
                        user=getenv('POSTGRES_USER'),
                        password=getenv('POSTGRES_PASSWORD'),
                        db_name=getenv('POSTGRES_DB'))
-
 
 user_api.engine = engine
 app.include_router(user_api.router)
@@ -29,6 +29,5 @@ server_api.engine = engine
 app.include_router(server_api.router)
 
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", port=7000, reload=True)
+if __name__ == '__main__':
+    uvicorn.run("run:app", port=int(getenv('API_PORT')), reload=True)
