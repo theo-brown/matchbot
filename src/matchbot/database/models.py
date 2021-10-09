@@ -1,11 +1,13 @@
 from __future__ import annotations
-from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey, DateTime, select
+from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey, DateTime, Table
 from sqlalchemy.dialects.postgresql import INET as POSTGRES_INET
 from sqlalchemy.dialects.postgresql import ENUM as POSTGRES_ENUM
 from sqlalchemy.dialects.postgresql import UUID as POSTGRES_UUID
 from sqlalchemy.orm import declarative_base, relationship
 from typing import Optional
 from uuid import UUID
+from datetime import datetime
+
 
 Base = declarative_base()
 
@@ -29,9 +31,15 @@ class MatchMap(Base):
     __tablename__ = 'match_maps'
 
     match_id = Column(POSTGRES_UUID(as_uuid=True), ForeignKey('matches.id'), primary_key=True)
-    map_number = Column(Integer, primary_key=True)
-    map_id = Column(String(32), ForeignKey('maps.id'))
+    number = Column(Integer, primary_key=True)
+    id = Column(String(32), ForeignKey('maps.id'))
     side = Column(MapSide)
+
+    map = relationship('Map', lazy='selectin')
+
+    @property
+    def name(self):
+        return self.map.name
 
 
 class Match(Base):
@@ -44,6 +52,39 @@ class Match(Base):
     finished_timestamp = Column(DateTime, nullable=True)
     team1_id = Column(POSTGRES_UUID(as_uuid=True), ForeignKey('teams.id'))
     team2_id = Column(POSTGRES_UUID(as_uuid=True), ForeignKey('teams.id'))
+
+    team1 = relationship('Team', lazy='selectin', foreign_keys=[team1_id], uselist=False)
+    team2 = relationship('Team', lazy='selectin', foreign_keys=[team2_id], uselist=False)
+    maps = relationship('MatchMap', lazy='selectin')
+    server = relationship('Server', back_populates='match', lazy='selectin', uselist=False)
+
+    def __init__(self, id: UUID, status: MatchStatus, team1_id: UUID, team2_id: UUID,
+                 created_timestamp: datetime,
+                 live_timestamp: Optional[datetime] = None,
+                 finished_timestamp: Optional[datetime] = None):
+        self.id = id
+        self.status = status
+        self.created_timestamp = created_timestamp
+        self.live_timestamp = live_timestamp
+        self.finished_timestamp = finished_timestamp
+        self.team1_id = team1_id
+        self.team2_id = team2_id
+
+    @property
+    def json(self):
+        return {'id': self.id,
+                'status': self.status,
+                'created_timestamp': self.created_timestamp,
+                'live_timestamp': self.live_timestamp,
+                'finished_timestamp': self.finished_timestamp,
+                'maps': [m.id for m in self.ordered_maps],
+                'sides': [m.side for m in self.ordered_maps],
+                'team1': self.team1.json,
+                'team2': self.team2.json}
+
+    @property
+    def ordered_maps(self):
+        return sorted(self.maps, key=lambda m: m.number)
 
 
 class ServerToken(Base):
@@ -64,6 +105,8 @@ class Server(Base):
     gotv_password = Column(String(32), nullable=True)
     rcon_password = Column(String(32), nullable=True)
     match_id = Column(POSTGRES_UUID(as_uuid=True), ForeignKey('matches.id'))
+
+    match = relationship('Match', back_populates='server', lazy='selectin')
 
 
 class TeamMembership(Base):
@@ -86,6 +129,9 @@ class Team(Base):
 
     users = relationship('User', secondary='team_members', back_populates='teams', lazy='selectin')
 
+    # matches = relationship('Match', lazy='selectin',
+    #                        primaryjoin='or_(Team.id==Match.team1_id, Team.id==Match.team2_id)')
+
     def __init__(self, id: UUID, name: str, tag: str):
         self.id = id
         self.name = name
@@ -95,7 +141,8 @@ class Team(Base):
     def json(self):
         return {'id': self.id,
                 'name': self.name,
-                'tag': self.tag}
+                'tag': self.tag,
+                'members': [user.json for user in self.users]}
 
 
 class User(Base):
@@ -124,6 +171,7 @@ if __name__ == '__main__':
     from dotenv import load_dotenv
     import asyncio
     from matchbot.database import new_session, new_engine
+    from sqlalchemy import select
 
     load_dotenv('../../.env')
     engine = new_engine('localhost', getenv('POSTGRES_PORT'), getenv('POSTGRES_USER'), getenv('POSTGRES_PASSWORD'),
