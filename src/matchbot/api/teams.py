@@ -35,11 +35,10 @@ async def create_team(team: api.models.CreateTeam):
             await session.rollback()
             raise
 
-        user_result = await session.execute(select(db.models.User).where(db.models.User.steam_id.in_(team.user_ids)))
-        users = user_result.scalars().all()
+        team_result = await session.execute(select(db.models.Team).where(db.models.Team.id==team.id))
+        created_team = team_result.scalar()
 
-    return {'team': db_team.json,
-            'members': [user.json for user in users]}
+    return created_team.json
 
 
 @router.post('/id/{team_id}/members/')
@@ -56,9 +55,7 @@ async def add_member_to_team(team_id: UUID,
             raise
         team_result = await session.execute(select(db.models.Team).where(db.models.Team.id==team_id))
         team = team_result.scalars().first()
-        users = team.users
-    return {'team': team.json,
-            'members': [user.json for user in users]}
+    return team.json
 
 
 ########
@@ -80,9 +77,7 @@ async def get(column: str, value: Union[UUID, str]):
         if not len(teams):
             raise HTTPException(status_code=404, detail="No matching team found")
         else:
-            return [{'team': team.json,
-                    'members': [user.json for user in team.users]}
-                    for team in teams]
+            return [team.json for team in teams]
 
 
 @router.get('/id/{id}')
