@@ -1,4 +1,9 @@
 python-dotenv~=0.18.0
-aiorcon~=0.6.8
-aiodocker~=0.19.1
-asyncpg~=0.24.0
+uvicorn~=0.13.4
+fastapi~=0.68.1
+matchbot~=0.0.1
+SQLAlchemy~=1.4.25
+pydantic~=1.8.2
+asyncio~=3.4.3
+aioredis~=2.0.0
+setuptools~=57.0.0
