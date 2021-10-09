@@ -24,20 +24,20 @@ CREATE TYPE match_status AS ENUM ('CREATED', 'QUEUED', 'LIVE', 'FINISHED');
 
 CREATE TABLE IF NOT EXISTS matches (id                 UUID         NOT NULL,
                                     status             match_status NOT NULL DEFAULT 'CREATED',
-                                    created_timestamp  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                    live_timestamp     TIMESTAMP             DEFAULT NULL,
-                                    finished_timestamp TIMESTAMP             DEFAULT NULL,
+                                    created_timestamp  TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                    live_timestamp     TIMESTAMPTZ           DEFAULT NULL,
+                                    finished_timestamp TIMESTAMPTZ           DEFAULT NULL,
                                     team1_id           UUID         NOT NULL REFERENCES teams(id),
                                     team2_id           UUID         NOT NULL REFERENCES teams(id),
                                     PRIMARY KEY (id));
 
 CREATE TYPE map_side AS ENUM ('knife', 'team1_ct', 'team1_t', 'team2_ct', 'team2_t');
 
-CREATE TABLE IF NOT EXISTS match_maps (match_id   UUID        NOT NULL REFERENCES matches(id),
-                                       map_number INTEGER     NOT NULL,
-                                       map_id     VARCHAR(32) NOT NULL REFERENCES maps(id),
-                                       side       map_side    NOT NULL DEFAULT 'knife',
-                                       PRIMARY KEY (match_id, map_number));
+CREATE TABLE IF NOT EXISTS match_maps (match_id UUID        NOT NULL REFERENCES matches(id),
+                                       number   INTEGER     NOT NULL,
+                                       id       VARCHAR(32) NOT NULL REFERENCES maps(id),
+                                       side     map_side    NOT NULL DEFAULT 'knife',
+                                       PRIMARY KEY (match_id, number));
 
 CREATE TABLE IF NOT EXISTS servers (id            UUID        NOT NULL,
                                     token         VARCHAR(32) NOT NULL UNIQUE REFERENCES server_tokens(token),
