@@ -70,7 +70,7 @@ async def get_match_by_id(match_id: UUID):
             return match.json
 
 
-@router.get('/team-id/{team_id}')
+@router.get('/team_id/{team_id}')
 async def get_matches_by_team_id(team_id: UUID):
     async with db.new_session(engine) as session:
         r = await session.execute(select(db.models.Match).where(or_(db.models.Match.team1_id==team_id,
