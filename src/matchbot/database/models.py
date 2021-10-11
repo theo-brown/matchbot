@@ -86,6 +86,25 @@ class Match(Base):
     def ordered_maps(self):
         return sorted(self.maps, key=lambda m: m.number)
 
+    @property
+    def config(self):
+        players_per_team = max(len(self.team1.users), len(self.team2.users))
+        return {'matchid': self.id,
+                'num_maps': len(self.maps),
+                'maplist': [m.id for m in self.ordered_maps],
+                'skip_veto': True,
+                'map_sides': [m.side for m in self.ordered_maps],
+                'players_per_team': players_per_team,
+                'team1': {'name': self.team1.name,
+                          'tag': self.team1.tag,
+                          'players': {user.steam_id: user.display_name for user in self.team1.users}},
+                'team2': {'name': self.team2.name,
+                          'tag': self.team2.tag,
+                          'players': {user.steam_id: user.display_name for user in self.team2.users}},
+                'cvars': {"get5_warmup_cfg": "warmup_2v2.cfg" if players_per_team == 2 else "warmup_5v5.cfg",
+                          "get5_live_cfg": "live_2v2.cfg" if players_per_team == 2 else "live_5v5.cfg"}}
+
+
 
 class ServerToken(Base):
     __tablename__ = 'server_tokens'
