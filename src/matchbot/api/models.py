@@ -47,6 +47,7 @@ class MatchStatus(str, Enum):
 
 
 class CreateMatch(BaseModel):
+    id: UUID
     status: Optional[MatchStatus] = 'CREATED'
     created_timestamp: Optional[datetime] = datetime.now()
     live_timestamp: Optional[datetime] = None
