@@ -95,3 +95,15 @@ class CreateServer(BaseModel):
     gotv_password: Optional[str] = None
     rcon_password: Optional[str] = None
     match_id: Optional[UUID] = None
+
+
+class UpdateServer(BaseModel):
+    token: Optional[str]
+    ip: Optional[IPvAnyAddress]
+    port: Optional[int]
+    gotv_port: Optional[int]
+    password: Optional[str] = None
+    gotv_password: Optional[str] = None
+    rcon_password: Optional[str] = None
+    match_id: Optional[UUID] = None
+
