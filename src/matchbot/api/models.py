@@ -47,13 +47,40 @@ class MatchStatus(str, Enum):
 
 
 class CreateMatch(BaseModel):
-    id: UUID
     status: Optional[MatchStatus] = 'CREATED'
     created_timestamp: Optional[datetime] = datetime.now()
     live_timestamp: Optional[datetime] = None
     finished_timestamp: Optional[datetime] = None
     team1_id: UUID
     team2_id: UUID
+
+
+class UpdateMatch(BaseModel):
+    status: Optional[MatchStatus] = None
+    created_timestamp: Optional[datetime] = None
+    live_timestamp: Optional[datetime] = None
+    finished_timestamp: Optional[datetime] = None
+    team1_id: Optional[UUID] = None
+    team2_id: Optional[UUID] = None
+
+
+class MatchMapSide(str, Enum):
+    knife = 'knife'
+    team1_ct = 'team1_ct'
+    team2_ct = 'team2_ct'
+    team1_t = 'team1_t'
+    team2_2 = 'team2_t'
+
+
+class CreateMatchMap(BaseModel):
+    number: int
+    id: str
+    side: MatchMapSide
+
+
+class UpdateMatchMap(BaseModel):
+    id: Optional[str] = None
+    side: Optional[MatchMapSide] = None
 
 
 # Server classes
