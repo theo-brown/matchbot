@@ -53,7 +53,7 @@ async def add_map_to_match(match_id: UUID,
         except:
             await session.rollback()
             raise
-        created_match = await session.get(db.models.Match, match.id)
+        created_match = await session.get(db.models.Match, match_id)
     return created_match.json
 
 
