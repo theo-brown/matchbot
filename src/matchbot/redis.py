@@ -50,26 +50,23 @@ class EventHandler:
         self._running = False
 
     async def _run(self):
-        self._running = True
-        while self.is_running:
+        while True:
+            print(f"Waiting for value in queue {self.queue.channel}")
             value = await self.queue.pop()
+            print(f"Received value {value} from queue {self.queue.channel}")
             self._loop.create_task(self.callback(value))
 
     def start(self):
-        if self.is_running:
-            raise RuntimeError("event handler already running")
+        print("Creating task")
+        self._loop.create_task(self._run())
 
-        if self._loop.is_running():
-            self._loop.create_task(self._run())
-        else:
-            raise RuntimeError("event loop not running")
+        if not self._loop.is_running():
+            print("Starting event loop")
+            self._loop.run_forever()
 
     def stop(self):
-        if self.is_running:
+        if self._loop.is_running():
+            self._loop.stop()
             self._running = False
         else:
-            raise RuntimeError("event handler not running")
-
-    @property
-    def is_running(self) -> bool:
-        return self._running
+            raise RuntimeError("event loop not running")
