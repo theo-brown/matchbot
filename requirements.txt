@@ -7,3 +7,5 @@ pydantic~=1.8.2
 asyncio~=3.4.3
 aioredis~=2.0.0
 setuptools~=57.0.0
+aiodocker~=0.19.1
+aiorcon~=0.6.8
