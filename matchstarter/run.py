@@ -1,6 +1,7 @@
 from matchbot.apps.matchstarter import MatchStarter
 from os import getenv
 
+
 matchstarter = MatchStarter(db_host=getenv("POSTGRES_HOST"),
                             db_port=int(getenv("POSTGRES_PORT")),
                             db_user=getenv("POSTGRES_USER"),
@@ -8,4 +9,5 @@ matchstarter = MatchStarter(db_host=getenv("POSTGRES_HOST"),
                             db_name=getenv("POSTGRES_DB"),
                             redis_host=getenv("REDIS_HOST"),
                             redis_port=int(getenv("REDIS_PORT")))
-matchstarter.start_event_handler()
+
+matchstarter.start_event_handler('match_queue')
