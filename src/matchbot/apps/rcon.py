@@ -57,7 +57,7 @@ if __name__ == '__main__':
         while True:
             try:
                 async with rcon_manager.new_rcon("3b3ba856-180b-499d-9028-4ff1bb7c3c0a") as rcon:
-                    print(await rcon("status"))
+                    print(await rcon("get5_status"))
             except ConnectionRefusedError:
                 print("Connection refused, retrying...")
 
