@@ -26,7 +26,7 @@ class MatchStarter(MatchbotBaseApp):
             match.set_as_live()
             server.match = match
             print(f"{timestamp()} Assigned Server object: {server.json}")
-            container_config = {"Image": "theobrown/csgo-docker:latest",
+            container_config = {"Image": "theobrown/csgo-get5-docker:latest",
                                 "Env": [f"SERVER_TOKEN={server.token}",
                                         f"PORT={server.port}",
                                         f"GOTV_PORT={server.gotv_port}",
