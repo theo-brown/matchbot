@@ -51,20 +51,22 @@ class EventHandler:
 
     async def _run(self):
         while True:
-            print(f"Waiting for value in queue {self.queue.channel}")
+            print(f"Waiting for value in channel '{self.queue.channel}'")
             value = await self.queue.pop()
-            print(f"Received value {value} from queue {self.queue.channel}")
+            print(f"Received value {value} in channel '{self.queue.channel}'")
             self._loop.create_task(self.callback(value))
 
     def start(self):
-        print("Creating task")
+        print(f"Starting EventHandler on '{self.queue.channel}'")
         self._loop.create_task(self._run())
 
         if not self._loop.is_running():
-            print("Starting event loop")
+            print("Starting EventHandler event loop")
             self._loop.run_forever()
 
+    # TODO: add close nicely on force quit
     def stop(self):
+        print(f"Stopping EventHandler on '{self.queue.channel}'")
         if self._loop.is_running():
             self._loop.stop()
             self._running = False

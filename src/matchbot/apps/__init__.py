@@ -31,9 +31,7 @@ class MatchbotBaseApp:
         self.event_handlers[channel] = EventHandler(channel, callback, host=self._redis_host, port=self._redis_port)
 
     def start_event_handler(self, channel):
-        print(f"Starting event handler on {channel}")
         self.event_handlers[channel].start()
 
     def stop_event_handler(self, channel):
-        print(f"Stopping event handler on {channel}")
         self.event_handlers[channel].stop()
