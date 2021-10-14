@@ -4,11 +4,18 @@ import matchbot.database as db
 from matchbot import api
 from uuid import UUID
 from sqlalchemy import select, or_
+from matchbot.redis import BlockingFIFOQueue
+from os import getenv
+
 
 engine: sqlalchemy.ext.asyncio.AsyncEngine
 
 router = APIRouter(prefix='/matches',
                    tags=['matches'])
+
+match_queue = BlockingFIFOQueue('match_queue',
+                                host=getenv('REDIS_HOST'),
+                                port=getenv('REDIS_PORT'))
 
 
 ##########
@@ -55,6 +62,12 @@ async def add_map_to_match(match_id: UUID,
             raise
         created_match = await session.get(db.models.Match, match_id)
     return created_match.json
+
+
+@router.post('/start/id/{match_id}')
+async def start_match_by_id(match_id: UUID):
+    await match_queue.push(str(match_id))
+    return True
 
 
 ########
