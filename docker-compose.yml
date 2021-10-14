@@ -29,21 +29,24 @@ services:
     ports:
       - ${REDIS_PORT}:${REDIS_PORT}
 
-#  api:
-#    build:
-#      context: .
-#      dockerfile: api/Dockerfile
-#    depends_on:
-#      - database
-#    ports:
-#      - ${API_PORT}:${API_PORT}
-#    environment:
-#      - POSTGRES_HOST='database'
-#      - POSTGRES_PORT
-#      - POSTGRES_USER
-#      - POSTGRES_PASSWORD
-#      - POSTGRES_DB
-#      - API_PORT
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    depends_on:
+      - database
+      - redis
+    ports:
+      - ${API_PORT}:${API_PORT}
+    environment:
+      - POSTGRES_HOST='database'
+      - POSTGRES_PORT
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+      - REDIS_HOST='redis'
+      - REDIS_PORT
+      - API_PORT
 
 
 #  matchstarter:

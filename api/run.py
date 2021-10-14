@@ -28,6 +28,5 @@ app.include_router(match_api.router)
 server_api.engine = engine
 app.include_router(server_api.router)
 
-
 if __name__ == '__main__':
-    uvicorn.run("run:app", port=int(getenv('API_PORT')), reload=True)
+    uvicorn.run("run:app", host="0.0.0.0", port=int(getenv('API_PORT')), reload=True)
