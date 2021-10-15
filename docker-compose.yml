@@ -48,28 +48,23 @@ services:
       - REDIS_PORT
       - API_PORT
 
-
-#  matchstarter:
-#    build:
-#      context: .
-#      dockerfile: matchstarter/Dockerfile
-#    depends_on:
-#      - database
-#      - redis
-#    environment:
-#      - POSTGRES_HOST='database'
-#      - POSTGRES_PORT
-#      - POSTGRES_USER
-#      - POSTGRES_PASSWORD
-#      - POSTGRES_DB
-#      - REDIS_HOST='redis'
-#      - REDIS_PORT
-#    ports:
-#    - "$PORT_MIN-$PORT_MAX:$PORT_MIN-$PORT_MAX/tcp"
-#    - "$PORT_MIN-$PORT_MAX:$PORT_MIN-$PORT_MAX/udp"
-#    - "$GOTV_PORT_MIN-$GOTV_PORT_MAX:$GOTV_PORT_MIN-$GOTV_PORT_MAX/udp"
-#    volumes:
-#     - /var/run/docker.sock:/var/run/docker.sock
+  matchstarter:
+    build:
+      context: .
+      dockerfile: matchstarter/Dockerfile
+    depends_on:
+      - database
+      - redis
+    environment:
+      - POSTGRES_HOST='database'
+      - POSTGRES_PORT
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+      - REDIS_HOST='redis'
+      - REDIS_PORT
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   database_volume:
