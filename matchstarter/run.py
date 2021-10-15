@@ -1,6 +1,8 @@
 from matchbot.apps.matchstarter import MatchStarter
 from os import getenv
+import matchbot.log
 
+logger = matchbot.log.console_logger('MatchStarter', matchbot.log.DEBUG)
 
 matchstarter = MatchStarter(db_host=getenv("POSTGRES_HOST"),
                             db_port=int(getenv("POSTGRES_PORT")),

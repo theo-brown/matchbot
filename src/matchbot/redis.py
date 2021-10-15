@@ -1,6 +1,7 @@
 import aioredis
 import asyncio
 from typing import Optional, Union, Callable, Coroutine
+import matchbot.log
 
 
 def connect(host="localhost", port=6379, decode_responses=True) -> aioredis.Redis:
@@ -14,13 +15,15 @@ def connect(host="localhost", port=6379, decode_responses=True) -> aioredis.Redi
         f"redis://{host}:{port}", decode_responses=decode_responses)
 
 
-class BlockingFIFOQueue:
+class BlockingFIFOQueue(matchbot.log.LoggedClass):
     def __init__(self,
                  channel: str,
+                 *args,
                  redis: Optional[aioredis.client.Redis] = None,
                  host="localhost",
                  port=6379,
-                 decode_responses=True):
+                 decode_responses=True,
+                 **kwargs):
         if redis is not None:
             self.redis = redis
         else:
@@ -35,12 +38,14 @@ class BlockingFIFOQueue:
         return value
 
 
-class EventHandler:
+class EventHandler(matchbot.log.LoggedClass):
     def __init__(self,
                  channel: str,
                  callback: Coroutine,
+                 *args,
                  loop: asyncio.AbstractEventLoop = None,
                  **kwargs):
+        super().__init__(*args, **kwargs)
         self.queue = BlockingFIFOQueue(channel, **kwargs)
         self.callback = callback
         if loop is None:
@@ -51,22 +56,22 @@ class EventHandler:
 
     async def _run(self):
         while True:
-            print(f"Waiting for value in channel '{self.queue.channel}'")
+            self.logger.debug(f"Waiting for value in channel '{self.queue.channel}'")
             value = await self.queue.pop()
-            print(f"Received value {value} in channel '{self.queue.channel}'")
+            self.logger.debug(f"Received value {value} in channel '{self.queue.channel}'")
             self._loop.create_task(self.callback(value))
 
     def start(self):
-        print(f"Starting EventHandler on '{self.queue.channel}'")
+        self.logger.debug(f"Starting EventHandler on '{self.queue.channel}'")
         self._loop.create_task(self._run())
 
         if not self._loop.is_running():
-            print("Starting EventHandler event loop")
+            self.logger.debug(f"Starting EventHandler event loop for '{self.queue.channel}'")
             self._loop.run_forever()
 
     # TODO: add close nicely on force quit
     def stop(self):
-        print(f"Stopping EventHandler on '{self.queue.channel}'")
+        self.logger.debug(f"Stopping EventHandler on '{self.queue.channel}'")
         if self._loop.is_running():
             self._loop.stop()
             self._running = False

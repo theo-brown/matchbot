@@ -1,10 +1,11 @@
 from __future__ import annotations
 import aiodocker
-from matchbot import timestamp
+import matchbot.log
 from matchbot import database as db
 from matchbot.apps import MatchbotBaseApp
 from sqlalchemy import select
 from uuid import UUID
+import matchbot.log
 
 
 class MatchStarter(MatchbotBaseApp):
@@ -14,10 +15,12 @@ class MatchStarter(MatchbotBaseApp):
         self.new_event_handler('match_queue', self.start_match)
 
     async def start_match(self, match_id: UUID):
-        print(f"{timestamp()} MatchStarter.start_match({match_id})")
+        self.logger.debug(f"start_match('{str(match_id)}') triggered by EventHandler on 'match_queue'")
         async with self.new_session() as session:
             match = await session.get(db.models.Match, match_id)
-            print(f"{timestamp()} Retrieved Match object: {match.json}")
+            if not match:
+                raise LookupError(f'No match found with id {match_id}')
+            self.logger.debug(f"Match: {match.json}")
             r = await session.execute(select(db.models.Server).where(db.models.Server.match_id.is_(None)))
             server = r.scalars().first()
             if not server:
@@ -25,7 +28,7 @@ class MatchStarter(MatchbotBaseApp):
             server.generate_passwords()
             match.set_as_live()
             server.match = match
-            print(f"{timestamp()} Assigned Server object: {server.json}")
+            self.logger.debug(f"Server: {server.json}")
             container_config = {"Image": "theobrown/csgo-get5-docker:latest",
                                 "Env": [f"SERVER_TOKEN={server.token}",
                                         f"PORT={server.port}",
@@ -39,11 +42,10 @@ class MatchStarter(MatchbotBaseApp):
                                                  f"{server.gotv_port}/udp": {}},
                                 "HostConfig": {"NetworkMode": "host"}}
             await self.docker.containers.run(config=container_config, name=server.id)
-            print(f"{timestamp()} Server started with config: {match.config}")
+            self.logger.info(f"Started server {server.id} running match {match.id}")
             session.begin()
-            print(f"{timestamp()} Committing changes to the database")
+            self.logger.debug(f"Committing changes to the database")
             session.add(match)
             session.add(server)
             await session.commit()
-            print(f"{timestamp()} Done.")
-            print(f"{timestamp()} Connect to server: {server.connect_str}")
+            self.logger.info(f"Connect to server using '{server.connect_str}'")
