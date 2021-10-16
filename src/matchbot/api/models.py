@@ -46,25 +46,6 @@ class MatchStatus(str, Enum):
     finished = 'FINISHED'
 
 
-class CreateMatch(BaseModel):
-    id: UUID
-    status: Optional[MatchStatus] = 'CREATED'
-    created_timestamp: Optional[datetime] = datetime.now()
-    live_timestamp: Optional[datetime] = None
-    finished_timestamp: Optional[datetime] = None
-    team1_id: UUID
-    team2_id: UUID
-
-
-class UpdateMatch(BaseModel):
-    status: Optional[MatchStatus] = None
-    created_timestamp: Optional[datetime] = None
-    live_timestamp: Optional[datetime] = None
-    finished_timestamp: Optional[datetime] = None
-    team1_id: Optional[UUID] = None
-    team2_id: Optional[UUID] = None
-
-
 class MatchMapSide(str, Enum):
     knife = 'knife'
     team1_ct = 'team1_ct'
@@ -82,6 +63,27 @@ class CreateMatchMap(BaseModel):
 class UpdateMatchMap(BaseModel):
     id: Optional[str] = None
     side: Optional[MatchMapSide] = None
+
+
+class CreateMatch(BaseModel):
+    id: Optional[UUID] = None
+    status: Optional[MatchStatus] = 'CREATED'
+    created_timestamp: Optional[datetime] = None
+    live_timestamp: Optional[datetime] = None
+    finished_timestamp: Optional[datetime] = None
+    team1_id: UUID
+    team2_id: UUID
+    maps: Optional[List[CreateMatchMap]] = []
+
+
+class UpdateMatch(BaseModel):
+    status: Optional[MatchStatus] = None
+    created_timestamp: Optional[datetime] = None
+    live_timestamp: Optional[datetime] = None
+    finished_timestamp: Optional[datetime] = None
+    team1_id: Optional[UUID] = None
+    team2_id: Optional[UUID] = None
+    maps: Optional[List[CreateMatchMap]] = None
 
 
 # Server classes
@@ -106,4 +108,3 @@ class UpdateServer(BaseModel):
     gotv_password: Optional[str] = None
     rcon_password: Optional[str] = None
     match_id: Optional[UUID] = None
-

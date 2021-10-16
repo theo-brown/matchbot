@@ -6,6 +6,8 @@ from uuid import UUID
 from sqlalchemy import select, or_
 from matchbot.redis import BlockingFIFOQueue
 from os import getenv
+import datetime
+import uuid
 
 
 engine: sqlalchemy.ext.asyncio.AsyncEngine
@@ -26,13 +28,20 @@ async def create_match(match: api.models.CreateMatch):
     """
     Add a match to the database
     """
-    match = db.models.Match(id=match.id,
+    match_id = match.id if match.id is not None else uuid.uuid4()
+    maps = [db.models.MatchMap(match_id=match_id,
+                               number=map.number,
+                               id=map.id,
+                               side=map.side) for map in match.maps]
+    match = db.models.Match(id=match_id,
                             status=match.status,
-                            created_timestamp=match.created_timestamp,
+                            created_timestamp=match.created_timestamp if match.created_timestamp is not None
+                                                                      else datetime.datetime.utcnow(),
                             live_timestamp=match.live_timestamp,
                             finished_timestamp=match.finished_timestamp,
                             team1_id=match.team1_id,
-                            team2_id=match.team2_id)
+                            team2_id=match.team2_id,
+                            maps=maps)
     async with db.new_session(engine) as session:
         try:
             session.begin()
@@ -41,8 +50,10 @@ async def create_match(match: api.models.CreateMatch):
         except:
             await session.rollback()
             raise
-        created_match = await session.get(db.models.Match, match.id)
-    return created_match.json
+    # TODO: This is yuck, but inexplicably prevents errors
+    async with db.new_session(engine) as session:
+        created_match = await session.get(db.models.Match, match_id)
+        return created_match.json
 
 
 @router.post('/id/{match_id}/map/')
@@ -62,12 +73,6 @@ async def add_map_to_match(match_id: UUID,
             raise
         created_match = await session.get(db.models.Match, match_id)
     return created_match.json
-
-
-@router.post('/start/id/{match_id}')
-async def start_match_by_id(match_id: UUID):
-    await match_queue.push(str(match_id))
-    return True
 
 
 ########
@@ -232,3 +237,11 @@ async def delete_match_map_by_map_number(match_id: UUID,
                 await session.rollback()
                 raise
             return True
+
+###############
+# START MATCH #
+###############
+@router.put('/start/id/{match_id}')
+async def start_match_by_id(match_id: UUID):
+    await match_queue.push(str(match_id))
+    return True
