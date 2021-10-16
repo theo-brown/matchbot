@@ -1,11 +1,9 @@
 from __future__ import annotations
 import aiodocker
-import matchbot.log
 from matchbot import database as db
 from matchbot.apps import MatchbotBaseApp
 from sqlalchemy import select
 from uuid import UUID
-import matchbot.log
 
 
 class MatchStarter(MatchbotBaseApp):
