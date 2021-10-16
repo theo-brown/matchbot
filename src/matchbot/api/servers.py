@@ -1,3 +1,5 @@
+import uuid
+
 import sqlalchemy
 from fastapi import APIRouter, HTTPException
 from matchbot import api
@@ -17,7 +19,7 @@ router = APIRouter(prefix='/servers',
 ##########
 @router.post('/')
 async def create_server(server: api.models.CreateServer):
-    server = db.models.Server(id=server.id,
+    server = db.models.Server(id=server.id if server.id else uuid.uuid4(),
                               token=server.token,
                               ip=server.ip,
                               port=server.port,

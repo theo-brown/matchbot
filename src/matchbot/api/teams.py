@@ -1,3 +1,4 @@
+import uuid
 from typing import Union
 from matchbot import api
 from matchbot import database as db
@@ -21,10 +22,11 @@ async def create_team(team: api.models.CreateTeam):
     Add a team to the database
     """
     async with db.new_session(engine) as session:
-        db_team = db.models.Team(id=team.id,
+        team_id = team.id if team.id is not None else uuid.uuid4()
+        db_team = db.models.Team(id=team_id,
                                  name=team.name,
                                  tag=team.tag)
-        db_team_members = [db.models.TeamMembership(team_id=team.id, steam_id=steam_id) for steam_id in
+        db_team_members = [db.models.TeamMembership(team_id=team_id, steam_id=steam_id) for steam_id in
                            team.user_ids]
         try:
             session.begin()

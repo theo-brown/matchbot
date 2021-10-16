@@ -18,7 +18,7 @@ class UpdateUser(BaseModel):
 
 # Team classes
 class CreateTeam(BaseModel):
-    id: UUID
+    id: Optional[UUID] = None
     name: str
     tag: str
     user_ids: Optional[List[int]] = None
@@ -88,7 +88,7 @@ class UpdateMatch(BaseModel):
 
 # Server classes
 class CreateServer(BaseModel):
-    id: UUID
+    id: Optional[UUID] = None
     token: str
     ip: IPvAnyAddress
     port: int
