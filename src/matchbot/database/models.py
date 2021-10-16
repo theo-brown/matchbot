@@ -8,7 +8,6 @@ from typing import Optional
 from uuid import UUID
 from datetime import datetime
 from secrets import token_urlsafe
-import json
 
 
 Base = declarative_base()
@@ -25,8 +24,8 @@ class Map(Base):
 
     @property
     def json(self):
-        return json.dumps({'id': str(self.id),
-                           'name': self.name})
+        return {'id': str(self.id),
+                'name': self.name}
 
 
 class MatchMap(Base):
@@ -74,42 +73,40 @@ class Match(Base):
 
     @property
     def json(self):
-        return json.dumps({'id': str(self.id),
-                           'status': self.status,
-                           'created_timestamp': str(self.created_timestamp),
-                           'live_timestamp': str(self.live_timestamp),
-                           'finished_timestamp': str(self.finished_timestamp),
-                           'maps': [m.id for m in self.ordered_maps],
-                           'sides': [m.side for m in self.ordered_maps],
-                           'team1': self.team1.json,
-                           'team2': self.team2.json})
+        return {'id': str(self.id),
+                'status': self.status,
+                'created_timestamp': str(self.created_timestamp),
+                'live_timestamp': str(self.live_timestamp),
+                'finished_timestamp': str(self.finished_timestamp),
+                'maps': [m.id for m in self.ordered_maps],
+                'sides': [m.side for m in self.ordered_maps],
+                'team1': self.team1.json,
+                'team2': self.team2.json}
 
     @property
     def ordered_maps(self):
-        # TODO: Check that this doesn't throw an error when it has no maps
-        if self.maps:
+        if isinstance(self.maps, list):
             return sorted(self.maps, key=lambda m: m.number)
         else:
             return []
 
     @property
     def config(self):
-        # TODO: Check that this doesn't throw an error when it has no maps
         players_per_team = max(len(self.team1.users), len(self.team2.users))
-        return json.dumps({'matchid': str(self.id),
-                           'num_maps': len(self.maps),
-                           'maplist': [m.id for m in self.ordered_maps],
-                           'skip_veto': True,
-                           'map_sides': [m.side for m in self.ordered_maps],
-                           'players_per_team': players_per_team,
-                           'team1': {'name': self.team1.name,
-                                     'tag': self.team1.tag,
-                                     'players': {user.steam_id: user.display_name for user in self.team1.users}},
-                           'team2': {'name': self.team2.name,
-                                     'tag': self.team2.tag,
-                                     'players': {user.steam_id: user.display_name for user in self.team2.users}},
-                           'cvars': {"get5_warmup_cfg": "warmup_2v2.cfg" if players_per_team == 2 else "warmup_5v5.cfg",
-                                     "get5_live_cfg": "live_2v2.cfg" if players_per_team == 2 else "live_5v5.cfg"}})
+        return {'matchid': str(self.id),
+                'num_maps': len(self.maps),
+                'maplist': [m.id for m in self.ordered_maps],
+                'skip_veto': True,
+                'map_sides': [m.side for m in self.ordered_maps],
+                'players_per_team': players_per_team,
+                'team1': {'name': self.team1.name,
+                          'tag': self.team1.tag,
+                          'players': {str(user.steam_id): user.display_name for user in self.team1.users}},
+                'team2': {'name': self.team2.name,
+                          'tag': self.team2.tag,
+                          'players': {str(user.steam_id): user.display_name for user in self.team2.users}},
+                'cvars': {'get5_warmup_cfg': 'warmup_2v2.cfg' if players_per_team == 2 else 'warmup_5v5.cfg',
+                          'get5_live_cfg': 'live_2v2.cfg' if players_per_team == 2 else 'live_5v5.cfg'}}
 
     def set_as_live(self):
         self.status = 'LIVE'
@@ -143,14 +140,14 @@ class Server(Base):
 
     @property
     def json(self):
-        return json.dumps({"id": str(self.id),
-                           "token": self.token,
-                           "ip": str(self.ip),
-                           "port": self.port,
-                           "gotv_port": self.gotv_port,
-                           "password": self.password,
-                           "rcon_password": self.rcon_password,
-                           "match": self.match.json if self.match_id else None})
+        return {'id': str(self.id),
+                'token': self.token,
+                'ip': str(self.ip),
+                'port': self.port,
+                'gotv_port': self.gotv_port,
+                'password': self.password,
+                'rcon_password': self.rcon_password,
+                'match': self.match.json if self.match_id else None}
 
     def generate_passwords(self):
         self.password = token_urlsafe(16)
@@ -192,10 +189,10 @@ class Team(Base):
 
     @property
     def json(self):
-        return json.dumps({'id': str(self.id),
-                           'name': self.name,
-                           'tag': self.tag,
-                           'members': [user.json for user in self.users]})
+        return {'id': str(self.id),
+                'name': self.name,
+                'tag': self.tag,
+                'members': [user.json for user in self.users]}
 
 
 class User(Base):
@@ -214,9 +211,9 @@ class User(Base):
 
     @property
     def json(self):
-        return json.dumps({'steam_id': self.steam_id,
-                           'display_name': self.display_name,
-                           'discord_id': self.discord_id})
+        return {'steam_id': self.steam_id,
+                'display_name': self.display_name,
+                'discord_id': self.discord_id}
 
 
 if __name__ == '__main__':
