@@ -41,7 +41,7 @@ class MatchStarter(MatchbotBaseApp):
                                                  f"{server.port}/udp": {},
                                                  f"{server.gotv_port}/udp": {}},
                                 "HostConfig": {"NetworkMode": "host"}}
-            await self.docker.containers.run(config=container_config, name=server.id)
+            await self.docker.containers.run(config=container_config, name=str(server.id))
             self.logger.info(f"Started server {server.id} running match {match.id}")
             session.begin()
             self.logger.debug(f"Committing changes to the database")
