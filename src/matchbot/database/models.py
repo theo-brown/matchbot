@@ -4,8 +4,6 @@ from sqlalchemy.dialects.postgresql import INET as POSTGRES_INET
 from sqlalchemy.dialects.postgresql import ENUM as POSTGRES_ENUM
 from sqlalchemy.dialects.postgresql import UUID as POSTGRES_UUID
 from sqlalchemy.orm import declarative_base, relationship
-from typing import Optional
-from uuid import UUID
 from datetime import datetime
 from secrets import token_urlsafe
 
@@ -58,18 +56,6 @@ class Match(Base):
     team2 = relationship('Team', lazy='selectin', foreign_keys=[team2_id], uselist=False)
     maps = relationship('MatchMap', lazy='selectin')
     server = relationship('Server', back_populates='match', lazy='selectin', uselist=False)
-
-    def __init__(self, id: UUID, status: MatchStatus, team1_id: UUID, team2_id: UUID,
-                 created_timestamp: datetime,
-                 live_timestamp: Optional[datetime] = None,
-                 finished_timestamp: Optional[datetime] = None):
-        self.id = id
-        self.status = status
-        self.created_timestamp = created_timestamp
-        self.live_timestamp = live_timestamp
-        self.finished_timestamp = finished_timestamp
-        self.team1_id = team1_id
-        self.team2_id = team2_id
 
     @property
     def json(self):
@@ -165,10 +151,6 @@ class TeamMembership(Base):
     team_id = Column(POSTGRES_UUID(as_uuid=True), ForeignKey('teams.id'), primary_key=True)
     steam_id = Column(BigInteger, ForeignKey('users.steam_id'), primary_key=True)
 
-    def __init__(self, team_id, steam_id):
-        self.team_id = team_id
-        self.steam_id = steam_id
-
 
 class Team(Base):
     __tablename__ = 'teams'
@@ -178,14 +160,6 @@ class Team(Base):
     tag = Column(String(15), nullable=True)
 
     users = relationship('User', secondary='team_members', back_populates='teams', lazy='selectin')
-
-    # matches = relationship('Match', lazy='selectin',
-    #                        primaryjoin='or_(Team.id==Match.team1_id, Team.id==Match.team2_id)')
-
-    def __init__(self, id: UUID, name: str, tag: str):
-        self.id = id
-        self.name = name
-        self.tag = tag
 
     @property
     def json(self):
@@ -203,11 +177,6 @@ class User(Base):
     display_name = Column(String(64))
 
     teams = relationship('Team', secondary='team_members', back_populates='users', lazy='selectin')
-
-    def __init__(self, steam_id: int, display_name: str, discord_id: Optional[int] = None):
-        self.steam_id = steam_id
-        self.display_name = display_name
-        self.discord_id = discord_id
 
     @property
     def json(self):
